@@ -59,7 +59,3 @@ typings/
 
 # next.js build output
 .next
-
-# developing files and folders
-develop/
-develop.js
