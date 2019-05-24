@@ -1,0 +1,41 @@
+{
+  "name": "@janiscommerce/database-dispatcher",
+  "version": "1.0.0",
+  "description": "Database dispatcher",
+  "main": "index.js",
+  "scripts": {
+    "test": "export TEST_ENV=true; mocha --exit -R nyan --recursive tests/",
+    "watch-test": "export TEST_ENV=true; mocha --exit -R nyan -w --recursive",
+    "coverage": "nyc npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/janis-commerce/database-dispatcher.git"
+  },
+  "author": "Janis",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/janis-commerce/database-dispatcher/issues"
+  },
+  "homepage": "https://github.com/janis-commerce/database-dispatcher#readme",
+  "dependencies": {
+    "codependency": "^2.1.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "mocha": "^5.2.0",
+    "nyc": "^14.1.0",
+    "sinon": "^7.3.2",
+    "@janiscommerce/mysql": "file:../mysql",
+    "@janiscommerce/mongodb": "file:../mongodb"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "optionalPeerDependencies": {
+    "@janiscommerce/mysql": "file:../mysql",
+    "@janiscommerce/mongodb": "file:../mongodb"
+  }
+}
