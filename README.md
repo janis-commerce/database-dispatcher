@@ -23,6 +23,7 @@ Clear all caches, including configs and DB connections.
 The errors are informed with a SchemaValidatorError.  
 This object has a code that can be useful for a correct error handling.  
 The codes are the following:  
+
 | Code | Description         |
 |------|---------------------|
 | 1    | Config not found    |
