@@ -15,7 +15,7 @@ class DatabaseDispatcher {
 		return DB_TYPES;
 	}
 
-	get configPath() {
+	static get configPath() {
 		return path.join(process.cwd(), 'database.json');
 	}
 
@@ -24,7 +24,7 @@ class DatabaseDispatcher {
 		if(!this.config) {
 			try {
 				/* eslint-disable global-require, import/no-dynamic-require */
-				const config = require(this.configPath);
+				const config = require(this.constructor.configPath);
 				this.config = config;
 
 			} catch(error) {
