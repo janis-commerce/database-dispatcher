@@ -56,13 +56,13 @@ describe('DatabaseDispatcher', function() {
 
 		it('should return database config path', function() {
 
-			assert.equal(typeof databaseDispatcher.configPath, 'string');
+			assert.equal(typeof DatabaseDispatcher.configPath, 'string');
 		});
 
 
 		it('should return database config object', function() {
 
-			configMock(databaseDispatcher.configPath);
+			configMock(DatabaseDispatcher.configPath);
 
 			assert.equal(typeof databaseDispatcher.databaseConfig, 'object');
 		});
@@ -142,7 +142,7 @@ describe('DatabaseDispatcher', function() {
 
 		it('should throw when config json not found', function() {
 
-			mock.stop(databaseDispatcher.configPath);
+			mock.stop(DatabaseDispatcher.configPath);
 
 			assert.throws(() => {
 				let foo = databaseDispatcher.databaseConfig; // eslint-disable-line
