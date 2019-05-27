@@ -6,7 +6,7 @@ class DatabaseDispatcherError extends Error {
 
 		return {
 			CONFIG_NOT_FOUND: 1,
-			INVALID_DB_TYPE: 2
+			INVALID_DB_KEY: 2
 		};
 	}
 
