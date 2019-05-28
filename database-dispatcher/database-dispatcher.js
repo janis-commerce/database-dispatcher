@@ -2,17 +2,17 @@
 
 const path = require('path');
 
-const MySQL = require('@janiscommerce/mysql');
-const MongoDB = require('@janiscommerce/mongodb');
-
 const DatabaseDispatcherError = require('./database-dispatcher-error');
 
-const DB_TYPES = ['mysql', 'mongodb'];
+const DB_DRIVERS = {
+	mysql: '@janiscommerce/mysql',
+	mongodb: '@janiscommerce/mongodb'
+};
 
 class DatabaseDispatcher {
 
 	static get dbTypes() {
-		return DB_TYPES;
+		return Object.keys(DB_DRIVERS);
 	}
 
 	static get configPath() {
@@ -44,12 +44,17 @@ class DatabaseDispatcher {
 
 		if(config && config.type && this.dbTypes.includes(config.type)) {
 
-			switch(config.type) {
-				case 'mongodb':
-					return MongoDB;
-				default:
-					return MySQL;
+			try {
+
+				return require(DB_DRIVERS[config.type]);
+
+			} catch(error) {
+
+				throw new DatabaseDispatcherError(`Package "${DB_DRIVERS[config.type]}" not installed.\nPlease run: npm install -save ${DB_DRIVERS[config.type]}`,
+					DatabaseDispatcherError.codes.DB_DRIVER_NOT_INSTALLED);
+
 			}
+
 		} else
 			throw new DatabaseDispatcherError('Invalid databaseKey', DatabaseDispatcherError.codes.INVALID_DB_KEY);
 	}
