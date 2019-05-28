@@ -18,10 +18,6 @@
     "url": "https://github.com/janis-commerce/database-dispatcher/issues"
   },
   "homepage": "https://github.com/janis-commerce/database-dispatcher#readme",
-  "dependencies": {
-    "@janiscommerce/mysql": "file:../mysql",
-    "@janiscommerce/mongodb": "file:../mongodb"
-  },
   "devDependencies": {
     "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.1.0",
