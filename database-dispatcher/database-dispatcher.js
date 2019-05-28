@@ -46,7 +46,7 @@ class DatabaseDispatcher {
 
 			try {
 
-				return require(DB_DRIVERS[config.type]);
+				return require(path.join(process.cwd(),'node_modules',DB_DRIVERS[config.type]));
 
 			} catch(error) {
 
