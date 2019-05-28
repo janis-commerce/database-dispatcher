@@ -5,6 +5,10 @@
 ## Installation
 ```
 npm install @janiscommerce/database-dispatcher
+
+# Then add one of the following:
+npm install --save @janiscommerce/mysql
+npm install --save @janiscommerce/mongodb
 ```
 
 ## API
@@ -24,10 +28,11 @@ The errors are informed with a SchemaValidatorError.
 This object has a code that can be useful for a correct error handling.  
 The codes are the following:  
 
-| Code | Description         |
-|------|---------------------|
-| 1    | Config not found    |
-| 2    | Invalid databaseKey |
+| Code | Description                   |
+|------|-------------------------------|
+| 1    | Config not found              |
+| 2    | Invalid databaseKey           |
+| 3    | Database driver not installed |
 
 ## Usage
 ```js
