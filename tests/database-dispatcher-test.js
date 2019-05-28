@@ -2,7 +2,7 @@
 
 const assert = require('assert');
 const mock = require('mock-require');
-
+const path = require('path');
 const DatabaseDispatcher = require('./../index');
 const DatabaseDispatcherError = require('./../database-dispatcher/database-dispatcher-error');
 
@@ -13,7 +13,7 @@ describe('DatabaseDispatcher', function() {
 	const databaseDispatcher = new DatabaseDispatcher();
 
 	const configMock = () => {
-		mock(DatabaseDispatcher.configPath, {
+		mock(path.join(process.cwd(), 'database.json'), {
 			core: {
 				type: 'mysql',
 				host: 'foo',
@@ -44,8 +44,8 @@ describe('DatabaseDispatcher', function() {
 	};
 
 	const databaseMock = () => {
-		mock('@janiscommerce/mysql', './../mocks/database-mock');
-		mock('@janiscommerce/mongodb', './../mocks/database-mock');
+		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mysql'), './../mocks/database-mock');
+		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mongodb'), './../mocks/database-mock');
 	};
 
 	beforeEach(() => {
@@ -150,7 +150,7 @@ describe('DatabaseDispatcher', function() {
 
 		it('should throw when db driver package is not installed', function() {
 
-			mock.stop('@janiscommerce/mysql');
+			mock.stopAll();
 
 			assert.throws(() => {
 				DatabaseDispatcher.getDBDriver({ type: 'mysql' });
