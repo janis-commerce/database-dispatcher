@@ -3,9 +3,6 @@
 const assert = require('assert');
 const mock = require('mock-require');
 
-const MySQL = require('@janiscommerce/mysql');
-const MongoDB = require('@janiscommerce/mongodb');
-
 const DatabaseDispatcher = require('./../index');
 const DatabaseDispatcherError = require('./../database-dispatcher/database-dispatcher-error');
 
@@ -15,8 +12,8 @@ describe('DatabaseDispatcher', function() {
 
 	const databaseDispatcher = new DatabaseDispatcher();
 
-	const configMock = configPath => {
-		mock(configPath, {
+	const configMock = () => {
+		mock(DatabaseDispatcher.configPath, {
 			core: {
 				type: 'mysql',
 				host: 'foo',
@@ -46,25 +43,36 @@ describe('DatabaseDispatcher', function() {
 		});
 	};
 
+	const databaseMock = () => {
+		mock('@janiscommerce/mysql', './../mocks/database-mock');
+		mock('@janiscommerce/mongodb', './../mocks/database-mock');
+	};
+
+	beforeEach(() => {
+		configMock();
+		databaseMock();
+	});
+
 	describe('getters', function() {
 
 		it('should return db types', function() {
 
 			assert.equal(typeof DatabaseDispatcher.dbTypes, 'object');
+
 		});
 
 
 		it('should return database config path', function() {
 
 			assert.equal(typeof DatabaseDispatcher.configPath, 'string');
+
 		});
 
 
 		it('should return database config object', function() {
 
-			configMock(DatabaseDispatcher.configPath);
-
 			assert.equal(typeof databaseDispatcher.databaseConfig, 'object');
+
 		});
 	});
 
@@ -72,12 +80,12 @@ describe('DatabaseDispatcher', function() {
 
 		it('should return MySQL module', function() {
 
-			assert.equal(DatabaseDispatcher.getDBDriver({ type: 'mysql' }), MySQL);
+			assert.equal(typeof DatabaseDispatcher.getDBDriver({ type: 'mysql' }), 'function');
 		});
 
 		it('should return MongoDB module', function() {
 
-			assert.equal(DatabaseDispatcher.getDBDriver({ type: 'mongodb' }), MongoDB);
+			assert.equal(typeof DatabaseDispatcher.getDBDriver({ type: 'mongodb' }), 'function');
 		});
 	});
 
@@ -140,9 +148,23 @@ describe('DatabaseDispatcher', function() {
 			});
 		});
 
+		it('should throw when db driver package is not installed', function() {
+
+			mock.stop('@janiscommerce/mysql');
+
+			assert.throws(() => {
+				DatabaseDispatcher.getDBDriver({ type: 'mysql' });
+			}, {
+				name: 'DatabaseDispatcherError',
+				code: DatabaseDispatcherError.codes.DB_DRIVER_NOT_INSTALLED
+			});
+
+		});
+
 		it('should throw when config json not found', function() {
 
-			mock.stop(DatabaseDispatcher.configPath);
+			mock.stopAll();
+			databaseDispatcher.clearCaches();
 
 			assert.throws(() => {
 				let foo = databaseDispatcher.databaseConfig; // eslint-disable-line
