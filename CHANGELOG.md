@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `Database dispatcher package`
 - `Unit tests`
 - `Docs`
+- `badges in readme`
 
 ### Fixes
 - `Fixed error while loading database drivers dependencies`
