@@ -1,5 +1,8 @@
 # database-dispatcher
 
+[![Build Status](https://travis-ci.org/janis-commerce/database-dispatcher.svg?branch=JCN-68-database-dispatcher)](https://travis-ci.org/janis-commerce/database-dispatcher)
+[![Coverage Status](https://coveralls.io/repos/github/janis-commerce/database-dispatcher/badge.svg?branch=JCN-68-database-dispatcher)](https://coveralls.io/github/janis-commerce/database-dispatcher?branch=JCN-68-database-dispatcher)
+
 **DatabaseDispatcher** is a package that returns the necessary DB driver from a received model. Access to the databases configuration then returns the driver instance with the connection. It caches the connections and configs.
 
 ## Installation

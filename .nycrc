@@ -2,7 +2,8 @@
   "exclude": [
     "tests/",
     "mocks/",
-    ".eslintrc.js"
+    ".eslintrc.js",
+    ".travis.yml"
   ],
   "extension": [
     ".js"
