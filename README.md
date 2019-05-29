@@ -1,6 +1,6 @@
 # database-dispatcher
 
-**DatabaseDispatcher** is a package that returns the necessary DB driver from a recieved model. Access to the databases configuration then returns the driver instance with the connection. It caches the connections and configs.
+**DatabaseDispatcher** is a package that returns the necessary DB driver from a received model. Access to the databases configuration then returns the driver instance with the connection. It caches the connections and configs.
 
 ## Installation
 ```
@@ -14,17 +14,17 @@ npm install --save @janiscommerce/mongodb
 ## API
 - `new DatabaseDispatcher()`  
 Constructs the database-dispatcher.  
-- `databaseConfig()`  
+- `databaseConfig`  
 Returns the loaded database config json.  
 - `getDatabase( "databaseKey" )`  
-Recieves the database key `[String]` then returns the database driver instance with the connection from the config json.  
+Receives the database key `[String]` then returns the database driver instance with the connection from the config json.  
 If the `databaseKey` not exists on the config json will throw a `DatabaseDispatcherError`.  
 The default value of `databaseKey` parameter is `"_default"`.  
 - `clearCaches()`  
 Clear all caches, including configs and DB connections.
 
 ## Errors
-The errors are informed with a SchemaValidatorError.  
+The errors are informed with a `DatabaseDispatcherError`.  
 This object has a code that can be useful for a correct error handling.  
 The codes are the following:  
 
