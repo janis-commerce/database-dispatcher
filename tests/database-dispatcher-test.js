@@ -13,7 +13,7 @@ describe('DatabaseDispatcher', function() {
 	const databaseDispatcher = new DatabaseDispatcher();
 
 	const configMock = () => {
-		mock(path.join(process.cwd(), 'database.json'), {
+		mock(path.join(process.cwd(), 'config', 'database.json'), {
 			core: {
 				type: 'mysql',
 				host: 'foo',

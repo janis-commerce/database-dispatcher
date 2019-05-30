@@ -16,7 +16,7 @@ class DatabaseDispatcher {
 	}
 
 	static get configPath() {
-		return path.join(process.cwd(), 'database.json');
+		return path.join(process.cwd(), 'config', 'database.json');
 	}
 
 	get databaseConfig() {
