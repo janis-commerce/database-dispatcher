@@ -6,7 +6,8 @@
 **DatabaseDispatcher** is a package that returns the necessary DB driver from a received model. Access to the databases configuration then returns the driver instance with the connection. It caches the connections and configs.
 
 ## Installation
-```
+
+```sh
 npm install @janiscommerce/database-dispatcher
 
 # Then add one of the following:
@@ -15,6 +16,7 @@ npm install --save @janiscommerce/mongodb
 ```
 
 ## API
+
 - `new DatabaseDispatcher()`  
 Constructs the database-dispatcher.  
 - `databaseConfig`  
@@ -27,6 +29,7 @@ The default value of `databaseKey` parameter is `"_default"`.
 Clear all caches, including configs and DB connections.
 
 ## Errors
+
 The errors are informed with a `DatabaseDispatcherError`.  
 This object has a code that can be useful for a correct error handling.  
 The codes are the following:  
@@ -38,6 +41,7 @@ The codes are the following:
 | 3    | Database driver not installed |
 
 ## Usage
+
 ```js
 const DatabaseDispatcher = require('@janiscommerce/database-dispatcher');
 
