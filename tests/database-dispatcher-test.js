@@ -53,38 +53,34 @@ describe('DatabaseDispatcher', function() {
 		databaseMock();
 	});
 
+	afterEach(() => {
+		mock.stopAll();
+	});
+
 	describe('getters', function() {
 
 		it('should return db types', function() {
-
 			assert.equal(typeof DatabaseDispatcher.dbTypes, 'object');
-
 		});
 
 
 		it('should return database config path', function() {
-
 			assert.equal(typeof DatabaseDispatcher.configPath, 'string');
-
 		});
 
 
 		it('should return database config object', function() {
-
 			assert.equal(typeof databaseDispatcher.databaseConfig, 'object');
-
 		});
 	});
 
 	describe('getDBDriver', function() {
 
 		it('should return MySQL module', function() {
-
 			assert.equal(typeof DatabaseDispatcher.getDBDriver({ type: 'mysql' }), 'function');
 		});
 
 		it('should return MongoDB module', function() {
-
 			assert.equal(typeof DatabaseDispatcher.getDBDriver({ type: 'mongodb' }), 'function');
 		});
 	});
@@ -140,6 +136,7 @@ describe('DatabaseDispatcher', function() {
 	describe('errors', function() {
 
 		it('should throw when databaseKey is invalid', function() {
+
 			assert.throws(() => {
 				DatabaseDispatcher.getDBDriver({ type: 'foo' });
 			}, {
@@ -151,6 +148,7 @@ describe('DatabaseDispatcher', function() {
 		it('should throw when db driver package is not installed', function() {
 
 			mock.stopAll();
+			configMock();
 
 			assert.throws(() => {
 				DatabaseDispatcher.getDBDriver({ type: 'mysql' });
@@ -158,13 +156,12 @@ describe('DatabaseDispatcher', function() {
 				name: 'DatabaseDispatcherError',
 				code: DatabaseDispatcherError.codes.DB_DRIVER_NOT_INSTALLED
 			});
-
 		});
 
 		it('should throw when config json not found', function() {
 
-			mock.stopAll();
 			databaseDispatcher.clearCaches();
+			mock.stopAll();
 
 			assert.throws(() => {
 				let foo = databaseDispatcher.databaseConfig; // eslint-disable-line
