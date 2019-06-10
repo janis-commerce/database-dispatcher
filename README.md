@@ -15,6 +15,56 @@ npm install --save @janiscommerce/mysql
 npm install --save @janiscommerce/mongodb
 ```
 
+## Configs
+
+This package requires a config file: `/path/to/root/config/database.json`  
+
+### Structure
+
+- Root key: the model `databaseKey`  
+Includes the driver type and connections settings.  
+
+```json
+{
+    "databaseKey": {...}
+}
+```
+
+Keys  
+
+- `type [String]`: Database driver type, example `"mysql"`.  
+- `host [String]`: Database connection host.  
+- `port [Number]`: Database connection port.  
+- `user [String]`: Database login user name.  
+- `password [String]`: Database login password.  
+- `database [String]`: Database name for connection, example `"myDB"`.  
+- `connectionLimit [Number]`: Connection limit.  
+- `prefix [String]`: Prefix for values.  
+
+### Example
+
+```json
+{
+    "core": {
+        "type": "mysql",
+        "host": "localhost",
+        "user": "root",
+        "database": "myDB",
+        "port": 3306
+        // ...
+    },
+    "services": {
+        "type": "mongodb",
+        "host": "mongodb://localhost",
+        "user": "sarasa",
+        "password": "foobar",
+        "database": "myDB",
+        "port": 27017
+        // ...
+    }
+}
+```
+
 ## API
 
 - `new DatabaseDispatcher()`  
