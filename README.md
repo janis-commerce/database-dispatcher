@@ -10,7 +10,7 @@
 ```sh
 npm install @janiscommerce/database-dispatcher
 
-# Then add one of the following:
+# Then install all the drivers that you need.
 npm install --save @janiscommerce/mysql
 npm install --save @janiscommerce/mongodb
 ```
@@ -24,9 +24,12 @@ This package requires a config file: `/path/to/root/config/database.json`
 - Root key: the model `databaseKey`  
 Includes the driver type and connections settings.  
 
-```json
+```js
 {
-    "databaseKey": {}
+    "databaseKey": {
+        "type": "mysql"
+        // ...
+    }
 }
 ```
 
