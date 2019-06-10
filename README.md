@@ -26,7 +26,7 @@ Includes the driver type and connections settings.
 
 ```json
 {
-    "databaseKey": {...}
+    "databaseKey": {}
 }
 ```
 
@@ -51,7 +51,6 @@ Keys
         "user": "root",
         "database": "myDB",
         "port": 3306
-        // ...
     },
     "services": {
         "type": "mongodb",
@@ -60,7 +59,6 @@ Keys
         "password": "foobar",
         "database": "myDB",
         "port": 27017
-        // ...
     }
 }
 ```
