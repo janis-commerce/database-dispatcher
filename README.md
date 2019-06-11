@@ -70,7 +70,7 @@ Keys
 
 - `new DatabaseDispatcher()`  
 Constructs the database-dispatcher.  
-- `databaseConfig`  
+- `getConfig`  
 Returns the loaded database config json.  
 - `getDatabase( "databaseKey" )`  
 Receives the database key `[String]` then returns the database driver instance with the connection from the config json.  
@@ -90,7 +90,8 @@ The codes are the following:
 | 1    | Config not found              |
 | 2    | Invalid databaseKey           |
 | 3    | Database driver not installed |
-| 4    | Invald config file            |
+| 4    | Invald config                 |
+| 5    | Invalid db type in config     |
 
 ## Usage
 
@@ -99,7 +100,7 @@ const DatabaseDispatcher = require('@janiscommerce/database-dispatcher');
 
 const dispatcher = new DatabaseDispatcher();
 
-const DBConfig = dispatcher.databaseConfig;
+const DBConfig = dispatcher.getConfig;
 
 /*
     core: {
@@ -116,7 +117,7 @@ const DBConfig = dispatcher.databaseConfig;
 
 const myDBConnection = dispatcher.getDatabase('core'); // A new DBDriver instance is returned.
 
-let fields = myDBConnection.getFields(model); // should connect to db driver and return the fields...
+let fields = myDBConnection.get(model, { item: 'sarasa' }); // should connect to db driver and return the items...
 
 dispatcher.clearCaches(); // cached connections and configs cleared.
 ```

@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `Docs`
 - `badges in readme`
 - `Invalid config error`
+- `Invalid db type in config error`
+- `Config validation methods`
 
 ### Fixes
 - `Fixed error while loading database drivers dependencies`
