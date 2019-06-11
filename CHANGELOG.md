@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `Unit tests`
 - `Docs`
 - `badges in readme`
+- `Invalid config error`
 
 ### Fixes
 - `Fixed error while loading database drivers dependencies`

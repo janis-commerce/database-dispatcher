@@ -90,6 +90,7 @@ The codes are the following:
 | 1    | Config not found              |
 | 2    | Invalid databaseKey           |
 | 3    | Database driver not installed |
+| 4    | Invald config file            |
 
 ## Usage
 
