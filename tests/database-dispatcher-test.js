@@ -59,66 +59,66 @@ describe('DatabaseDispatcher', function() {
 
 	describe('getters', function() {
 
-		it('should return db types', function() {
-			assert.equal(typeof DatabaseDispatcher.dbTypes, 'object');
+		it('should return supported db drivers types object', function() {
+			assert.deepEqual(typeof DatabaseDispatcher.dbTypes, 'object');
 		});
 
 
 		it('should return database config path', function() {
-			assert.equal(typeof DatabaseDispatcher.configPath, 'string');
+			assert.deepEqual(typeof DatabaseDispatcher.configPath, 'string');
 		});
 
 
 		it('should return database config object', function() {
-			assert.equal(typeof databaseDispatcher.databaseConfig, 'object');
+			assert.deepEqual(typeof databaseDispatcher.databaseConfig, 'object');
 		});
 	});
 
 	describe('getDBDriver', function() {
 
 		it('should return MySQL module', function() {
-			assert.equal(typeof DatabaseDispatcher.getDBDriver({ type: 'mysql' }), 'function');
+			assert.deepEqual(typeof DatabaseDispatcher.getDBDriver({ type: 'mysql' }), 'function');
 		});
 
 		it('should return MongoDB module', function() {
-			assert.equal(typeof DatabaseDispatcher.getDBDriver({ type: 'mongodb' }), 'function');
+			assert.deepEqual(typeof DatabaseDispatcher.getDBDriver({ type: 'mongodb' }), 'function');
 		});
 	});
 
 	describe('getDatabase', function() {
 
 		it('should return database connection (MySQL)', function() {
-			assert.equal(typeof databaseDispatcher.getDatabase('core'), 'object');
+			assert.deepEqual(typeof databaseDispatcher.getDatabase('core'), 'object');
 		});
 
 		it('should return database connection (MongoDB)', function() {
-			assert.equal(typeof databaseDispatcher.getDatabase('foo'), 'object');
+			assert.deepEqual(typeof databaseDispatcher.getDatabase('foo'), 'object');
 		});
 
 		it('should return database connection (Default)', function() {
-			assert.equal(typeof databaseDispatcher.getDatabase(), 'object');
+			assert.deepEqual(typeof databaseDispatcher.getDatabase(), 'object');
 		});
 	});
 
 	describe('caches', function() {
 
 		it('should return all databases connection object', function() {
-			assert.equal(typeof databaseDispatcher.databases, 'object');
+			assert.deepEqual(typeof databaseDispatcher.databases, 'object');
 		});
 
 		it('should return core database connection object', function() {
-			assert.equal(typeof databaseDispatcher.databases.core, 'object');
+			assert.deepEqual(typeof databaseDispatcher.databases.core, 'object');
 		});
 
 		it('should return config object', function() {
-			assert.equal(typeof databaseDispatcher.config, 'object');
+			assert.deepEqual(typeof databaseDispatcher.config, 'object');
 		});
 
 		it('should return database connections', function() {
 
-			assert.equal(typeof databaseDispatcher.getDatabase('core'), 'object');
-			assert.equal(typeof databaseDispatcher.getDatabase('foo'), 'object');
-			assert.equal(typeof databaseDispatcher.getDatabase(), 'object');
+			assert.deepEqual(typeof databaseDispatcher.getDatabase('core'), 'object');
+			assert.deepEqual(typeof databaseDispatcher.getDatabase('foo'), 'object');
+			assert.deepEqual(typeof databaseDispatcher.getDatabase(), 'object');
 		});
 	});
 
@@ -126,10 +126,14 @@ describe('DatabaseDispatcher', function() {
 
 		it('should delete config and database caches', function() {
 
+
+			let config = databaseDispatcher.databaseConfig;
+			databaseDispatcher.getDatabase('core');
+
 			databaseDispatcher.clearCaches();
 
-			assert.equal(databaseDispatcher.config, undefined);
-			assert.equal(databaseDispatcher.databases, undefined);
+			assert.deepEqual(databaseDispatcher.config, undefined);
+			assert.deepEqual(databaseDispatcher.databases, undefined);
 		});
 	});
 
@@ -138,7 +142,7 @@ describe('DatabaseDispatcher', function() {
 		it('should throw when databaseKey is invalid', function() {
 
 			assert.throws(() => {
-				DatabaseDispatcher.getDBDriver({ type: 'foo' });
+				DatabaseDispatcher.getDBDriver({ type: 'sarasa' });
 			}, {
 				name: 'DatabaseDispatcherError',
 				code: DatabaseDispatcherError.codes.INVALID_DB_KEY
