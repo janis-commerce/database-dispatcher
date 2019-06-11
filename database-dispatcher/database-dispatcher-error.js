@@ -8,7 +8,8 @@ class DatabaseDispatcherError extends Error {
 			CONFIG_NOT_FOUND: 1,
 			INVALID_DB_KEY: 2,
 			DB_DRIVER_NOT_INSTALLED: 3,
-			INVALID_CONFIG: 4
+			INVALID_CONFIG: 4,
+			INVALID_DB_TYPE_CONFIG: 5
 		};
 	}
 
