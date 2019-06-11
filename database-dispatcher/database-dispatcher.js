@@ -21,14 +21,19 @@ class DatabaseDispatcher {
 
 	get databaseConfig() {
 
+		let config;
+
 		if(!this.config) {
 			try {
-				const config = require(this.constructor.configPath); // eslint-disable-line
-				this.config = config;
-
+				config = require(this.constructor.configPath); // eslint-disable-line
 			} catch(error) {
 				throw new DatabaseDispatcherError('Config not found', DatabaseDispatcherError.codes.CONFIG_NOT_FOUND);
 			}
+
+			if(typeof config !== 'object' || Array.isArray(config))
+				throw new DatabaseDispatcherError('Invalid config file', DatabaseDispatcherError.codes.INVALID_CONFIG);
+
+			this.config = config;
 		}
 
 		return this.config;
@@ -41,13 +46,11 @@ class DatabaseDispatcher {
 	 */
 	static getDBDriver(config) {
 
-		if(!config || !this.dbTypes[config.type])
+		if(!(config && this.dbTypes[config.type] && typeof this.dbTypes[config.type] === 'string'))
 			throw new DatabaseDispatcherError('Invalid databaseKey', DatabaseDispatcherError.codes.INVALID_DB_KEY);
 
 		try {
-
 			return require(path.join(process.cwd(), 'node_modules', this.dbTypes[config.type])); //eslint-disable-line
-
 		} catch(error) {
 			throw new DatabaseDispatcherError(`Package "${this.dbTypes[config.type]}" not installed.\nPlease run: npm install ${this.dbTypes[config.type]}`,
 				DatabaseDispatcherError.codes.DB_DRIVER_NOT_INSTALLED);
