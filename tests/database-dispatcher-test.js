@@ -60,17 +60,27 @@ describe('DatabaseDispatcher', function() {
 	describe('getters', function() {
 
 		it('should return supported db drivers types object', function() {
-			assert.deepEqual(typeof DatabaseDispatcher.dbTypes, 'object');
+
+			const dbTypes = {
+				mysql: '@janiscommerce/mysql',
+				mongodb: '@janiscommerce/mongodb'
+			};
+
+			assert.deepEqual(DatabaseDispatcher.dbTypes, dbTypes);
 		});
 
 
 		it('should return database config path', function() {
-			assert.deepEqual(typeof DatabaseDispatcher.configPath, 'string');
+
+			const configPath = path.join(process.cwd(), 'config', 'database.json');
+
+			assert.deepEqual(DatabaseDispatcher.configPath, configPath);
 		});
 
 
 		it('should return database config object', function() {
 			assert.deepEqual(typeof databaseDispatcher.databaseConfig, 'object');
+			assert.deepEqual(databaseDispatcher.databaseConfig.core.type, 'mysql');
 		});
 	});
 
@@ -88,15 +98,15 @@ describe('DatabaseDispatcher', function() {
 	describe('getDatabase', function() {
 
 		it('should return database connection (MySQL)', function() {
-			assert.deepEqual(typeof databaseDispatcher.getDatabase('core'), 'object');
+			assert.deepEqual(databaseDispatcher.getDatabase('core').testMethod(), true);
 		});
 
 		it('should return database connection (MongoDB)', function() {
-			assert.deepEqual(typeof databaseDispatcher.getDatabase('foo'), 'object');
+			assert.deepEqual(databaseDispatcher.getDatabase('foo').testMethod(), true);
 		});
 
 		it('should return database connection (Default)', function() {
-			assert.deepEqual(typeof databaseDispatcher.getDatabase(), 'object');
+			assert.deepEqual(databaseDispatcher.getDatabase().testMethod(), true);
 		});
 	});
 
@@ -107,18 +117,12 @@ describe('DatabaseDispatcher', function() {
 		});
 
 		it('should return core database connection object', function() {
-			assert.deepEqual(typeof databaseDispatcher.databases.core, 'object');
+			assert.deepEqual(databaseDispatcher.databases.core.testMethod(), true);
 		});
 
 		it('should return config object', function() {
 			assert.deepEqual(typeof databaseDispatcher.config, 'object');
-		});
-
-		it('should return database connections', function() {
-
-			assert.deepEqual(typeof databaseDispatcher.getDatabase('core'), 'object');
-			assert.deepEqual(typeof databaseDispatcher.getDatabase('foo'), 'object');
-			assert.deepEqual(typeof databaseDispatcher.getDatabase(), 'object');
+			assert.deepEqual(databaseDispatcher.config.core.type, 'mysql');
 		});
 	});
 
@@ -139,7 +143,7 @@ describe('DatabaseDispatcher', function() {
 
 	describe('errors', function() {
 
-		it('should throw when databaseKey is invalid', function() {
+		it('should throw when the databaseKey is invalid', function() {
 
 			assert.throws(() => {
 				DatabaseDispatcher.getDBDriver({ type: 'sarasa' });
@@ -149,7 +153,7 @@ describe('DatabaseDispatcher', function() {
 			});
 		});
 
-		it('should throw when db driver package is not installed', function() {
+		it('should throw when required db driver package is not installed', function() {
 
 			mock.stopAll();
 			configMock();
@@ -162,7 +166,7 @@ describe('DatabaseDispatcher', function() {
 			});
 		});
 
-		it('should throw when config json not found', function() {
+		it('should throw when config.json not found', function() {
 
 			databaseDispatcher.clearCaches();
 			mock.stopAll();

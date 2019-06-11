@@ -15,6 +15,10 @@ class DatabaseMock {
 			prefix: config.prefix || ''
 		};
 	}
+
+	testMethod() {
+		return true;
+	}
 }
 
 module.exports = DatabaseMock;
