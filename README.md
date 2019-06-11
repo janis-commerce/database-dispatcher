@@ -35,14 +35,14 @@ Includes the driver type and connections settings.
 
 Keys  
 
-- `type [String]`: Database driver type, example `"mysql"`.  
-- `host [String]`: Database connection host.  
-- `port [Number]`: Database connection port.  
-- `user [String]`: Database login user name.  
-- `password [String]`: Database login password.  
-- `database [String]`: Database name for connection, example `"myDB"`.  
-- `connectionLimit [Number]`: Connection limit.  
-- `prefix [String]`: Prefix for values.  
+- `type [String]` (required): Database driver type, example `"mysql"`.  
+- `host [String]` (required): Database connection host.  
+- `port [Number]` (required): Database connection port.  
+- `user [String]` (optional): Database login user name.  
+- `password [String]` (optional): Database login password.  
+- `database [String]` (required): Database name for connection, example `"myDB"`.  
+- `connectionLimit [Number]` (optional): Connection limit.  
+- `prefix [String]` (optional): Prefix for values.  
 
 ### Example
 
