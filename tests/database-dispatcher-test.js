@@ -83,22 +83,8 @@ describe('DatabaseDispatcher', function() {
 
 
 		it('should return database config object', function() {
-			assert.deepEqual(typeof databaseDispatcher.databaseConfig, 'object');
-			assert.deepEqual(databaseDispatcher.databaseConfig.core.type, 'mysql');
-		});
-
-		it('should throw "Invalid config file" if the config json is not valid or have unexpected datatypes', function() {
-
-			databaseDispatcher.clearCaches();
-			mock.stopAll();
-			badConfigMock();
-
-			assert.throws(() => {
-				databaseDispatcher.databaseConfig();
-			}, {
-				name: 'DatabaseDispatcherError',
-				code: DatabaseDispatcherError.codes.INVALID_CONFIG
-			});
+			assert.deepEqual(typeof databaseDispatcher.getConfig, 'object');
+			assert.deepEqual(databaseDispatcher.getConfig.core.type, 'mysql');
 		});
 	});
 
@@ -110,15 +96,6 @@ describe('DatabaseDispatcher', function() {
 
 		it('should return MongoDB module', function() {
 			assert.deepEqual(typeof DatabaseDispatcher.getDBDriver({ type: 'mongodb' }), 'function');
-		});
-
-		it('should throw "invalid databaseKey" if the database type config is in unexpected format', function() {
-			assert.throws(() => {
-				DatabaseDispatcher.getDBDriver({ type: ['mysql', 'mongodb'] });
-			}, {
-				name: 'DatabaseDispatcherError',
-				code: DatabaseDispatcherError.codes.INVALID_DB_KEY
-			});
 		});
 	});
 
@@ -140,16 +117,16 @@ describe('DatabaseDispatcher', function() {
 	describe('caches', function() {
 
 		it('should return all databases connection object', function() {
-			assert.deepEqual(typeof databaseDispatcher.databases, 'object');
+			assert.deepEqual(typeof DatabaseDispatcher.databases, 'object');
 		});
 
 		it('should return core database connection object', function() {
-			assert.deepEqual(databaseDispatcher.databases.core.testMethod(), true);
+			assert.deepEqual(DatabaseDispatcher.databases.core.testMethod(), true);
 		});
 
 		it('should return config object', function() {
-			assert.deepEqual(typeof databaseDispatcher.config, 'object');
-			assert.deepEqual(databaseDispatcher.config.core.type, 'mysql');
+			assert.deepEqual(typeof DatabaseDispatcher.config, 'object');
+			assert.deepEqual(DatabaseDispatcher.config.core.type, 'mysql');
 		});
 	});
 
@@ -157,15 +134,15 @@ describe('DatabaseDispatcher', function() {
 
 		it('should delete config and database caches', function() {
 
-			const foo = databaseDispatcher.databaseConfig;
+			const foo = databaseDispatcher.getConfig;
 			assert.equal(foo.core.type, 'mysql');
 
 			databaseDispatcher.getDatabase('core');
 
 			databaseDispatcher.clearCaches();
 
-			assert.deepEqual(databaseDispatcher.config, undefined);
-			assert.deepEqual(databaseDispatcher.databases, undefined);
+			assert.deepEqual(DatabaseDispatcher.config, undefined);
+			assert.deepEqual(DatabaseDispatcher.databases, undefined);
 		});
 	});
 
@@ -178,6 +155,16 @@ describe('DatabaseDispatcher', function() {
 			}, {
 				name: 'DatabaseDispatcherError',
 				code: DatabaseDispatcherError.codes.INVALID_DB_KEY
+			});
+		});
+
+		it('should throw when the databaseKey config is invalid', function() {
+
+			assert.throws(() => {
+				DatabaseDispatcher.getDBDriver({ type: ['mysql', 'mongodb'] });
+			}, {
+				name: 'DatabaseDispatcherError',
+				code: DatabaseDispatcherError.codes.INVALID_DB_TYPE_CONFIG
 			});
 		});
 
@@ -194,16 +181,30 @@ describe('DatabaseDispatcher', function() {
 			});
 		});
 
-		it('should throw when config json file not found', function() {
+		it('should throw when config json file not fould', function() {
 
 			databaseDispatcher.clearCaches();
 			mock.stopAll();
 
 			assert.throws(() => {
-				let foo = databaseDispatcher.databaseConfig; // eslint-disable-line
+				databaseDispatcher.getConfig();
 			}, {
 				name: 'DatabaseDispatcherError',
 				code: DatabaseDispatcherError.codes.CONFIG_NOT_FOUND
+			});
+		});
+
+		it('should throw when config json file is invalid', function() {
+
+			databaseDispatcher.clearCaches();
+			mock.stopAll();
+			badConfigMock();
+
+			assert.throws(() => {
+				databaseDispatcher.getConfig();
+			}, {
+				name: 'DatabaseDispatcherError',
+				code: DatabaseDispatcherError.codes.INVALID_CONFIG
 			});
 		});
 	});
