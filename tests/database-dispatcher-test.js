@@ -43,6 +43,10 @@ describe('DatabaseDispatcher', function() {
 		});
 	};
 
+	const badConfigMock = () => {
+		mock(path.join(process.cwd(), 'config', 'database.json'), ['foobar']);
+	};
+
 	const databaseMock = () => {
 		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mysql'), './../mocks/database-mock');
 		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mongodb'), './../mocks/database-mock');
@@ -82,6 +86,20 @@ describe('DatabaseDispatcher', function() {
 			assert.deepEqual(typeof databaseDispatcher.databaseConfig, 'object');
 			assert.deepEqual(databaseDispatcher.databaseConfig.core.type, 'mysql');
 		});
+
+		it('should throw "Invalid config file" if the config json is not valid or have unexpected datatypes', function() {
+
+			databaseDispatcher.clearCaches();
+			mock.stopAll();
+			badConfigMock();
+
+			assert.throws(() => {
+				databaseDispatcher.databaseConfig();
+			}, {
+				name: 'DatabaseDispatcherError',
+				code: DatabaseDispatcherError.codes.INVALID_CONFIG
+			});
+		});
 	});
 
 	describe('getDBDriver', function() {
@@ -92,6 +110,15 @@ describe('DatabaseDispatcher', function() {
 
 		it('should return MongoDB module', function() {
 			assert.deepEqual(typeof DatabaseDispatcher.getDBDriver({ type: 'mongodb' }), 'function');
+		});
+
+		it('should throw "invalid databaseKey" if the database type config is in unexpected format', function() {
+			assert.throws(() => {
+				DatabaseDispatcher.getDBDriver({ type: ['mysql', 'mongodb'] });
+			}, {
+				name: 'DatabaseDispatcherError',
+				code: DatabaseDispatcherError.codes.INVALID_DB_KEY
+			});
 		});
 	});
 
@@ -130,8 +157,9 @@ describe('DatabaseDispatcher', function() {
 
 		it('should delete config and database caches', function() {
 
+			const foo = databaseDispatcher.databaseConfig;
+			assert.equal(foo.core.type, 'mysql');
 
-			let config = databaseDispatcher.databaseConfig;
 			databaseDispatcher.getDatabase('core');
 
 			databaseDispatcher.clearCaches();
@@ -166,7 +194,7 @@ describe('DatabaseDispatcher', function() {
 			});
 		});
 
-		it('should throw when config.json not found', function() {
+		it('should throw when config json file not found', function() {
 
 			databaseDispatcher.clearCaches();
 			mock.stopAll();
