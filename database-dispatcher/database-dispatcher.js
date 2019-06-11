@@ -12,7 +12,7 @@ const DB_DRIVERS = {
 class DatabaseDispatcher {
 
 	static get dbTypes() {
-		return Object.keys(DB_DRIVERS);
+		return DB_DRIVERS;
 	}
 
 	static get configPath() {
@@ -23,8 +23,7 @@ class DatabaseDispatcher {
 
 		if(!this.config) {
 			try {
-				/* eslint-disable global-require, import/no-dynamic-require */
-				const config = require(this.constructor.configPath);
+				const config = require(this.constructor.configPath); // eslint-disable-line
 				this.config = config;
 
 			} catch(error) {
@@ -42,21 +41,17 @@ class DatabaseDispatcher {
 	 */
 	static getDBDriver(config) {
 
-		if(config && config.type && this.dbTypes.includes(config.type)) {
-
-			try {
-
-				return require(path.join(process.cwd(), 'node_modules', DB_DRIVERS[config.type]));
-
-			} catch(error) {
-
-				throw new DatabaseDispatcherError(`Package "${DB_DRIVERS[config.type]}" not installed.\nPlease run: npm install -save ${DB_DRIVERS[config.type]}`,
-					DatabaseDispatcherError.codes.DB_DRIVER_NOT_INSTALLED);
-
-			}
-
-		} else
+		if(!config || !this.dbTypes[config.type])
 			throw new DatabaseDispatcherError('Invalid databaseKey', DatabaseDispatcherError.codes.INVALID_DB_KEY);
+
+		try {
+
+			return require(path.join(process.cwd(), 'node_modules', this.dbTypes[config.type])); //eslint-disable-line
+
+		} catch(error) {
+			throw new DatabaseDispatcherError(`Package "${this.dbTypes[config.type]}" not installed.\nPlease run: npm install ${this.dbTypes[config.type]}`,
+				DatabaseDispatcherError.codes.DB_DRIVER_NOT_INSTALLED);
+		}
 	}
 
 	/**
