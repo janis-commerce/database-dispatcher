@@ -10,8 +10,6 @@ const DatabaseDispatcherError = require('./../database-dispatcher/database-dispa
 
 describe('DatabaseDispatcher', function() {
 
-	const databaseDispatcher = new DatabaseDispatcher();
-
 	const configMock = () => {
 		mock(path.join(process.cwd(), 'config', 'database.json'), {
 			core: {
@@ -43,8 +41,8 @@ describe('DatabaseDispatcher', function() {
 		});
 	};
 
-	const badConfigMock = () => {
-		mock(path.join(process.cwd(), 'config', 'database.json'), ['foobar']);
+	const badConfigMock = returns => {
+		mock(path.join(process.cwd(), 'config', 'database.json'), returns);
 	};
 
 	const databaseMock = () => {
@@ -83,8 +81,8 @@ describe('DatabaseDispatcher', function() {
 
 
 		it('should return database config object', function() {
-			assert.deepEqual(typeof databaseDispatcher.getConfig, 'object');
-			assert.deepEqual(databaseDispatcher.getConfig.core.type, 'mysql');
+			assert.deepEqual(typeof DatabaseDispatcher.config, 'object');
+			assert.deepEqual(DatabaseDispatcher.config.core.type, 'mysql');
 		});
 	});
 
@@ -102,26 +100,26 @@ describe('DatabaseDispatcher', function() {
 	describe('getDatabase', function() {
 
 		it('should return database connection (MySQL)', function() {
-			assert.deepEqual(databaseDispatcher.getDatabase('core').testMethod(), true);
+			assert.deepEqual(DatabaseDispatcher.getDatabase('core').testMethod(), true);
 		});
 
 		it('should return database connection (MongoDB)', function() {
-			assert.deepEqual(databaseDispatcher.getDatabase('foo').testMethod(), true);
+			assert.deepEqual(DatabaseDispatcher.getDatabase('foo').testMethod(), true);
 		});
 
 		it('should return database connection (Default)', function() {
-			assert.deepEqual(databaseDispatcher.getDatabase().testMethod(), true);
+			assert.deepEqual(DatabaseDispatcher.getDatabase().testMethod(), true);
 		});
 	});
 
 	describe('caches', function() {
 
 		it('should return all databases connection object', function() {
-			assert.deepEqual(typeof DatabaseDispatcher.databases, 'object');
+			assert.deepEqual(typeof DatabaseDispatcher._databases, 'object');  // eslint-disable-line
 		});
 
 		it('should return core database connection object', function() {
-			assert.deepEqual(DatabaseDispatcher.databases.core.testMethod(), true);
+			assert.deepEqual(DatabaseDispatcher._databases.core.testMethod(), true); // eslint-disable-line
 		});
 
 		it('should return config object', function() {
@@ -134,15 +132,15 @@ describe('DatabaseDispatcher', function() {
 
 		it('should delete config and database caches', function() {
 
-			const foo = databaseDispatcher.getConfig;
+			const foo = DatabaseDispatcher.config;
 			assert.equal(foo.core.type, 'mysql');
 
-			databaseDispatcher.getDatabase('core');
+			DatabaseDispatcher.getDatabase('core');
 
-			databaseDispatcher.clearCaches();
+			DatabaseDispatcher.clearCaches();
 
-			assert.deepEqual(DatabaseDispatcher.config, undefined);
-			assert.deepEqual(DatabaseDispatcher.databases, undefined);
+			assert.deepEqual(DatabaseDispatcher._config, undefined); // eslint-disable-line
+			assert.deepEqual(DatabaseDispatcher._databases, undefined); // eslint-disable-line
 		});
 	});
 
@@ -181,13 +179,13 @@ describe('DatabaseDispatcher', function() {
 			});
 		});
 
-		it('should throw when config json file not fould', function() {
+		it('should throw when config json file not found', function() {
 
-			databaseDispatcher.clearCaches();
+			DatabaseDispatcher.clearCaches();
 			mock.stopAll();
 
 			assert.throws(() => {
-				databaseDispatcher.getConfig();
+				return DatabaseDispatcher.config;
 			}, {
 				name: 'DatabaseDispatcherError',
 				code: DatabaseDispatcherError.codes.CONFIG_NOT_FOUND
@@ -196,16 +194,35 @@ describe('DatabaseDispatcher', function() {
 
 		it('should throw when config json file is invalid', function() {
 
-			databaseDispatcher.clearCaches();
+			DatabaseDispatcher.clearCaches();
 			mock.stopAll();
-			badConfigMock();
+			badConfigMock(['foobar']);
 
 			assert.throws(() => {
-				databaseDispatcher.getConfig();
+				return DatabaseDispatcher.config;
 			}, {
 				name: 'DatabaseDispatcherError',
 				code: DatabaseDispatcherError.codes.INVALID_CONFIG
 			});
+		});
+
+		it('should throw when db type setting not found in config', function() {
+
+			DatabaseDispatcher.clearCaches();
+			mock.stopAll();
+			badConfigMock({
+				core: { sarasa: 'sarasa' }
+			});
+
+			const foo = DatabaseDispatcher.config;
+
+			assert.throws(() => {
+				DatabaseDispatcher._validateConfig(foo); // eslint-disable-line
+			}, {
+				name: 'DatabaseDispatcherError',
+				code: DatabaseDispatcherError.codes.CONFIG_DB_TYPE_NOT_FOUND
+			});
+
 		});
 	});
 });
