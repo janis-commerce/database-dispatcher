@@ -19,28 +19,39 @@ class DatabaseDispatcher {
 		return path.join(process.cwd(), 'config', 'database.json');
 	}
 
-	get getConfig() {
+	static get config() {
 
-		if(!this.constructor.config)
-			this.constructor.setConfig();
+		if(!this._config)
+			this._setConfig();
 
-		return this.constructor.config;
+		return this._config;
 	}
 
-	static setConfig() {
+	static set config(config) {
+		this._config = config;
+	}
+
+	static _setConfig() {
+
+		let config;
 
 		try {
-			this.config = require(this.configPath); // eslint-disable-line
+			config = require(this.configPath); // eslint-disable-line
 		} catch(error) {
 			throw new DatabaseDispatcherError('Config not found', DatabaseDispatcherError.codes.CONFIG_NOT_FOUND);
 		}
 
-		if(typeof this.config !== 'object' || Array.isArray(this.config))
+		if(typeof config !== 'object' || Array.isArray(config))
 			throw new DatabaseDispatcherError('Invalid config', DatabaseDispatcherError.codes.INVALID_CONFIG);
+
+		this.config = config;
 	}
 
 	static _validateConfig(config) {
-		if(!(config && config.type && typeof config.type === 'string'))
+		if(!(config && config.type))
+			throw new DatabaseDispatcherError('DB type setting not found in config', DatabaseDispatcherError.codes.CONFIG_DB_TYPE_NOT_FOUND);
+
+		if(typeof config.type !== 'string')
 			throw new DatabaseDispatcherError('Invalid db type in config', DatabaseDispatcherError.codes.INVALID_DB_TYPE_CONFIG);
 
 		if(!this.dbTypes[config.type])
@@ -69,32 +80,32 @@ class DatabaseDispatcher {
 	 * @param {String} databaseKey databaseKey for configuration
 	 * @returns DBDriver instance with connection settings from database config json
 	 */
-	getDatabase(databaseKey) {
+	static getDatabase(databaseKey) {
 
 		if(!databaseKey)
 			databaseKey = '_default';
 
-		if(!this.constructor.databases)
-			this.constructor.databases = {};
+		if(!this._databases)
+			this._databases = {};
 
-		if(!this.constructor.databases[databaseKey]) {
+		if(!this._databases[databaseKey]) {
 
-			const config = this.getConfig[databaseKey];
+			const config = this.config[databaseKey];
 
-			const DBDriver = this.constructor.getDBDriver(config);
+			const DBDriver = this.getDBDriver(config);
 
-			this.constructor.databases[databaseKey] = new DBDriver(config);
+			this._databases[databaseKey] = new DBDriver(config);
 		}
 
-		return this.constructor.databases[databaseKey];
+		return this._databases[databaseKey];
 	}
 
 	/**
 	 * Clear config json and database connections caches
 	 */
-	clearCaches() {
-		delete this.constructor.databases;
-		delete this.constructor.config;
+	static clearCaches() {
+		delete this._databases;
+		delete this._config;
 	}
 }
 
