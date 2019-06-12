@@ -9,7 +9,8 @@ class DatabaseDispatcherError extends Error {
 			INVALID_DB_KEY: 2,
 			DB_DRIVER_NOT_INSTALLED: 3,
 			INVALID_CONFIG: 4,
-			INVALID_DB_TYPE_CONFIG: 5
+			INVALID_DB_TYPE_CONFIG: 5,
+			CONFIG_DB_TYPE_NOT_FOUND: 6
 		};
 	}
 
