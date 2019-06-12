@@ -68,11 +68,9 @@ Keys
 
 ## API
 
-- `new DatabaseDispatcher()`  
-Constructs the database-dispatcher.  
-- `getConfig`  
+- `config`  
 Returns the loaded database config json.  
-- `getDatabase( "databaseKey" )`  
+- `getDatabase("databaseKey")`  
 Receives the database key `[String]` then returns the database driver instance with the connection from the config json.  
 If the `databaseKey` not exists on the config json will throw a `DatabaseDispatcherError`.  
 The default value of `databaseKey` parameter is `"_default"`.  
@@ -85,22 +83,21 @@ The errors are informed with a `DatabaseDispatcherError`.
 This object has a code that can be useful for a correct error handling.  
 The codes are the following:  
 
-| Code | Description                   |
-|------|-------------------------------|
-| 1    | Config not found              |
-| 2    | Invalid databaseKey           |
-| 3    | Database driver not installed |
-| 4    | Invald config                 |
-| 5    | Invalid db type in config     |
+| Code | Description                        |
+|------|------------------------------------|
+| 1    | Config not found                   |
+| 2    | Invalid databaseKey                |
+| 3    | Database driver not installed      |
+| 4    | Invald config                      |
+| 5    | Invalid db type in config          |
+| 6    | DB type setting not found in config|
 
 ## Usage
 
 ```js
 const DatabaseDispatcher = require('@janiscommerce/database-dispatcher');
 
-const dispatcher = new DatabaseDispatcher();
-
-const DBConfig = dispatcher.getConfig;
+const DBConfig = DatabaseDispatcher.config;
 
 /*
     core: {
@@ -115,9 +112,9 @@ const DBConfig = dispatcher.getConfig;
     }
 */
 
-const myDBConnection = dispatcher.getDatabase('core'); // A new DBDriver instance is returned.
+const myDBConnection = DatabaseDispatcher.getDatabase('core'); // A new DBDriver instance is returned.
 
 let fields = myDBConnection.get(model, { item: 'sarasa' }); // should connect to db driver and return the items...
 
-dispatcher.clearCaches(); // cached connections and configs cleared.
+DatabaseDispatcher.clearCaches(); // cached connections and configs cleared.
 ```
