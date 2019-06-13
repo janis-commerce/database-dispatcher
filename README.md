@@ -1,7 +1,7 @@
 # database-dispatcher
 
-[![Build Status](https://travis-ci.org/janis-commerce/database-dispatcher.svg?branch=JCN-68-database-dispatcher)](https://travis-ci.org/janis-commerce/database-dispatcher)
-[![Coverage Status](https://coveralls.io/repos/github/janis-commerce/database-dispatcher/badge.svg?branch=JCN-68-database-dispatcher)](https://coveralls.io/github/janis-commerce/database-dispatcher?branch=JCN-68-database-dispatcher)
+[![Build Status](https://travis-ci.org/janis-commerce/database-dispatcher.svg?branch=master)](https://travis-ci.org/janis-commerce/database-dispatcher)
+[![Coverage Status](https://coveralls.io/repos/github/janis-commerce/database-dispatcher/badge.svg?branch=master)](https://coveralls.io/github/janis-commerce/database-dispatcher?branch=master)
 
 **DatabaseDispatcher** is a package that returns the necessary DB driver from a received model. Access to the databases configuration then returns the driver instance with the connection. It caches the connections and configs.
 
@@ -17,12 +17,12 @@ npm install --save @janiscommerce/mongodb
 
 ## Configs
 
-This package requires a config file: `/path/to/root/config/database.json`  
+This package requires a config file: `/path/to/root/config/database.json`
 
 ### Structure
 
-- Root key: the model `databaseKey`  
-Includes the driver type and connections settings.  
+- Root key: the model `databaseKey`
+Includes the driver type and connections settings.
 
 ```js
 {
@@ -33,16 +33,16 @@ Includes the driver type and connections settings.
 }
 ```
 
-Keys  
+Keys
 
-- `type [String]` (required): Database driver type, example `"mysql"`.  
-- `host [String]` (required): Database connection host.  
-- `port [Number]` (required): Database connection port.  
-- `user [String]` (optional): Database login user name.  
-- `password [String]` (optional): Database login password.  
-- `database [String]` (required): Database name for connection, example `"myDB"`.  
-- `connectionLimit [Number]` (optional): Connection limit.  
-- `prefix [String]` (optional): Prefix for values.  
+- `type [String]` (required): Database driver type, example `"mysql"`.
+- `host [String]` (required): Database connection host.
+- `port [Number]` (required): Database connection port.
+- `user [String]` (optional): Database login user name.
+- `password [String]` (optional): Database login password.
+- `database [String]` (required): Database name for connection, example `"myDB"`.
+- `connectionLimit [Number]` (optional): Connection limit.
+- `prefix [String]` (optional): Prefix for values.
 
 ### Example
 
@@ -68,20 +68,20 @@ Keys
 
 ## API
 
-- `config`  
-Returns the loaded database config json.  
-- `getDatabase("databaseKey")`  
-Receives the database key `[String]` then returns the database driver instance with the connection from the config json.  
-If the `databaseKey` not exists on the config json will throw a `DatabaseDispatcherError`.  
-The default value of `databaseKey` parameter is `"_default"`.  
-- `clearCaches()`  
+- `config`
+Returns the loaded database config json.
+- `getDatabase("databaseKey")`
+Receives the database key `[String]` then returns the database driver instance with the connection from the config json.
+If the `databaseKey` not exists on the config json will throw a `DatabaseDispatcherError`.
+The default value of `databaseKey` parameter is `"_default"`.
+- `clearCaches()`
 Clear all caches, including configs and DB connections.
 
 ## Errors
 
-The errors are informed with a `DatabaseDispatcherError`.  
-This object has a code that can be useful for a correct error handling.  
-The codes are the following:  
+The errors are informed with a `DatabaseDispatcherError`.
+This object has a code that can be useful for a correct error handling.
+The codes are the following:
 
 | Code | Description                        |
 |------|------------------------------------|
