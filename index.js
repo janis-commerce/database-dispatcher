@@ -1,5 +1,5 @@
 'use strict';
 
-const { DatabaseDispatcher } = require('./database-dispatcher');
+const { DatabaseDispatcher } = require('./lib');
 
 module.exports = DatabaseDispatcher;

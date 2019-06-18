@@ -4,7 +4,7 @@ const assert = require('assert');
 const mock = require('mock-require');
 const path = require('path');
 const DatabaseDispatcher = require('./../index');
-const DatabaseDispatcherError = require('./../database-dispatcher/database-dispatcher-error');
+const DatabaseDispatcherError = require('./../lib/database-dispatcher-error');
 
 /* eslint-disable prefer-arrow-callback */
 
