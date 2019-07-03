@@ -3,6 +3,9 @@
 const assert = require('assert');
 const mock = require('mock-require');
 const path = require('path');
+
+const sandbox = require('sinon').createSandbox();
+
 const DatabaseDispatcher = require('./../index');
 const DatabaseDispatcherError = require('./../lib/database-dispatcher-error');
 
@@ -10,219 +13,286 @@ const DatabaseDispatcherError = require('./../lib/database-dispatcher-error');
 
 describe('DatabaseDispatcher', function() {
 
-	const configMock = () => {
-		mock(path.join(process.cwd(), 'config', 'database.json'), {
-			core: {
-				type: 'mysql',
-				host: 'foo',
-				user: 'root',
-				password: 'foobar',
-				database: 'my_db',
-				port: '1234'
-			},
+	const envVars = {};
 
-			foo: {
-				type: 'mongodb',
-				host: 'foo',
-				user: 'root',
-				password: 'foobar',
-				database: 'my_db',
-				port: '1234'
-			},
+	const setEnvVar = (key, value) => {
+		envVars[key] = value;
+		process.env[key] = value;
+	};
 
-			_default: {
-				type: 'mysql',
-				host: 'foo',
-				user: 'root',
-				password: 'foobar',
-				database: 'my_db',
-				port: '1234'
-			}
+	const cleanEnvVars = () => {
+		Object.keys(envVars).forEach(key => {
+			delete process.env[key];
 		});
 	};
-
-	const badConfigMock = returns => {
-		mock(path.join(process.cwd(), 'config', 'database.json'), returns);
-	};
-
-	const databaseMock = () => {
-		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mysql'), './../mocks/database-mock');
-		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mongodb'), './../mocks/database-mock');
-	};
-
-	beforeEach(() => {
-		configMock();
-		databaseMock();
-	});
 
 	afterEach(() => {
+		cleanEnvVars();
 		mock.stopAll();
+		DatabaseDispatcher.clearCache();
+		sandbox.restore();
 	});
 
-	describe('getters', function() {
-
-		it('should return supported db drivers types object', function() {
-
-			const dbTypes = {
-				mysql: '@janiscommerce/mysql',
-				mongodb: '@janiscommerce/mongodb'
+	class DBDriverMock {
+		constructor(config = {}) {
+			this.config = {
+				host: config.host,
+				user: config.user,
+				password: config.password,
+				database: config.database || null,
+				port: config.port
 			};
+		}
+	}
 
-			assert.deepEqual(DatabaseDispatcher.dbTypes, dbTypes);
-		});
+	const databaseMock = () => {
+		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mysql'), DBDriverMock);
+		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mongodb'), DBDriverMock);
+	};
 
+	const mockConfig = config => {
+		mock(path.join(process.cwd(), 'config', 'database.json'), config);
+	};
 
-		it('should return database config path', function() {
+	const validConfig = {
+		foo: {
+			type: 'mongodb',
+			host: 'foo',
+			user: 'root',
+			password: 'foobar',
+			database: 'my_db',
+			port: '1234'
+		},
 
-			const configPath = path.join(process.cwd(), 'config', 'database.json');
+		_default: {
+			type: 'mysql',
+			host: 'foo',
+			user: 'root',
+			password: 'foobar',
+			database: 'my_db',
+			port: '1234'
+		}
+	};
 
-			assert.deepEqual(DatabaseDispatcher.configPath, configPath);
-		});
+	context('when no config file found', function() {
 
+		context('when no ENV vars for key are setted', function() {
 
-		it('should return database config object', function() {
-			assert.deepEqual(typeof DatabaseDispatcher.config, 'object');
-			assert.deepEqual(DatabaseDispatcher.config.core.type, 'mysql');
-		});
-	});
-
-	describe('getDBDriver', function() {
-
-		it('should return MySQL module', function() {
-			assert.deepEqual(typeof DatabaseDispatcher.getDBDriver({ type: 'mysql' }), 'function');
-		});
-
-		it('should return MongoDB module', function() {
-			assert.deepEqual(typeof DatabaseDispatcher.getDBDriver({ type: 'mongodb' }), 'function');
-		});
-	});
-
-	describe('getDatabase', function() {
-
-		it('should return database connection (MySQL)', function() {
-			assert.deepEqual(DatabaseDispatcher.getDatabase('core').testMethod(), true);
-		});
-
-		it('should return database connection (MongoDB)', function() {
-			assert.deepEqual(DatabaseDispatcher.getDatabase('foo').testMethod(), true);
-		});
-
-		it('should return database connection (Default)', function() {
-			assert.deepEqual(DatabaseDispatcher.getDatabase().testMethod(), true);
-		});
-	});
-
-	describe('caches', function() {
-
-		it('should return all databases connection object', function() {
-			assert.deepEqual(typeof DatabaseDispatcher._databases, 'object');  // eslint-disable-line
-		});
-
-		it('should return core database connection object', function() {
-			assert.deepEqual(DatabaseDispatcher._databases.core.testMethod(), true); // eslint-disable-line
-		});
-
-		it('should return config object', function() {
-			assert.deepEqual(typeof DatabaseDispatcher.config, 'object');
-			assert.deepEqual(DatabaseDispatcher.config.core.type, 'mysql');
-		});
-	});
-
-	describe('clearCaches', function() {
-
-		it('should delete config and database caches', function() {
-
-			const foo = DatabaseDispatcher.config;
-			assert.equal(foo.core.type, 'mysql');
-
-			DatabaseDispatcher.getDatabase('core');
-
-			DatabaseDispatcher.clearCaches();
-
-			assert.deepEqual(DatabaseDispatcher._config, undefined); // eslint-disable-line
-			assert.deepEqual(DatabaseDispatcher._databases, undefined); // eslint-disable-line
-		});
-	});
-
-	describe('errors', function() {
-
-		it('should throw when the databaseKey is invalid', function() {
-
-			assert.throws(() => {
-				DatabaseDispatcher.getDBDriver({ type: 'sarasa' });
-			}, {
-				name: 'DatabaseDispatcherError',
-				code: DatabaseDispatcherError.codes.INVALID_DB_KEY
-			});
-		});
-
-		it('should throw when the databaseKey config is invalid', function() {
-
-			assert.throws(() => {
-				DatabaseDispatcher.getDBDriver({ type: ['mysql', 'mongodb'] });
-			}, {
-				name: 'DatabaseDispatcherError',
-				code: DatabaseDispatcherError.codes.INVALID_DB_TYPE_CONFIG
-			});
-		});
-
-		it('should throw when required db driver package is not installed', function() {
-
-			mock.stopAll();
-			configMock();
-
-			assert.throws(() => {
-				DatabaseDispatcher.getDBDriver({ type: 'mysql' });
-			}, {
-				name: 'DatabaseDispatcherError',
-				code: DatabaseDispatcherError.codes.DB_DRIVER_NOT_INSTALLED
-			});
-		});
-
-		it('should throw when config json file not found', function() {
-
-			DatabaseDispatcher.clearCaches();
-			mock.stopAll();
-
-			assert.throws(() => {
-				return DatabaseDispatcher.config;
-			}, {
-				name: 'DatabaseDispatcherError',
-				code: DatabaseDispatcherError.codes.CONFIG_NOT_FOUND
-			});
-		});
-
-		it('should throw when config json file is invalid', function() {
-
-			DatabaseDispatcher.clearCaches();
-			mock.stopAll();
-			badConfigMock(['foobar']);
-
-			assert.throws(() => {
-				return DatabaseDispatcher.config;
-			}, {
-				name: 'DatabaseDispatcherError',
-				code: DatabaseDispatcherError.codes.INVALID_CONFIG
-			});
-		});
-
-		it('should throw when db type setting not found in config', function() {
-
-			DatabaseDispatcher.clearCaches();
-			mock.stopAll();
-			badConfigMock({
-				core: { sarasa: 'sarasa' }
+			it('should reject trying to getDatabaseByKey', function() {
+				assert.throws(() => DatabaseDispatcher.getDatabaseByKey('foo'), {
+					name: 'DatabaseDispatcherError',
+					code: DatabaseDispatcherError.codes.CONFIG_NOT_FOUND
+				});
 			});
 
-			const foo = DatabaseDispatcher.config;
+		});
 
-			assert.throws(() => {
-				DatabaseDispatcher._validateConfig(foo); // eslint-disable-line
-			}, {
-				name: 'DatabaseDispatcherError',
-				code: DatabaseDispatcherError.codes.CONFIG_DB_TYPE_NOT_FOUND
+		context('when ENV vars for key are setted', function() {
+
+			it('should reject if type is not allowed', function() {
+
+				setEnvVar('DB_FOO_HOST', 'my-host');
+				setEnvVar('DB_FOO_TYPE', 'unknown-type');
+
+				assert.throws(() => DatabaseDispatcher.getDatabaseByKey('foo'), {
+					name: 'DatabaseDispatcherError',
+					code: DatabaseDispatcherError.codes.DB_CONFIG_TYPE_NOT_ALLOWED
+				});
+
+			});
+
+			it('should if driver is not installed', function() {
+
+				setEnvVar('DB_FOO_HOST', 'my-host');
+				setEnvVar('DB_FOO_TYPE', 'mysql');
+
+				assert.throws(() => DatabaseDispatcher.getDatabaseByKey('foo'), {
+					name: 'DatabaseDispatcherError',
+					code: DatabaseDispatcherError.codes.DB_DRIVER_NOT_INSTALLED
+				});
+
+			});
+
+			it('should return a driver instance if is installed', function() {
+
+				setEnvVar('DB_FOO_HOST', 'my-host');
+				setEnvVar('DB_FOO_TYPE', 'mysql');
+
+				databaseMock();
+
+				let DBDriver;
+
+				assert.doesNotThrow(() => {
+					DBDriver = DatabaseDispatcher.getDatabaseByKey('foo');
+				});
+
+				const dbDriver = new DBDriver();
+
+				assert(dbDriver instanceof DBDriverMock);
+			});
+
+			it('should return the cached driver instance on successive calls', function() {
+
+				const spyDBDriver = sandbox.spy(DatabaseDispatcher, '_getDBDriver');
+
+				setEnvVar('DB_FOO_HOST', 'my-host');
+				setEnvVar('DB_FOO_TYPE', 'mysql');
+
+				databaseMock();
+
+				let DBDriver;
+				let SameDBDriver;
+
+				assert.doesNotThrow(() => {
+					DBDriver = DatabaseDispatcher.getDatabaseByKey('foo');
+					SameDBDriver = DatabaseDispatcher.getDatabaseByKey('foo');
+				});
+
+				sandbox.assert.calledOnce(spyDBDriver);
+				sandbox.assert.calledWithExactly(spyDBDriver, {
+					host: 'my-host',
+					type: 'mysql',
+					user: undefined,
+					password: undefined,
+					port: undefined
+				});
+
+				assert.deepEqual(DBDriver, SameDBDriver);
 			});
 
 		});
 	});
+
+	context('when invalid config file found', function() {
+
+		it('should reject', function() {
+
+			mockConfig(['foo']);
+
+			assert.throws(() => DatabaseDispatcher.getDatabaseByKey('foo'), {
+				name: 'DatabaseDispatcherError',
+				code: DatabaseDispatcherError.codes.INVALID_CONFIG_FILE
+			});
+
+		});
+	});
+
+	context('when valid config file found', function() {
+
+		it('should reject when database config not found for that key', function() {
+
+			mockConfig(validConfig);
+
+			assert.throws(() => DatabaseDispatcher.getDatabaseByKey('unknown-database-key'), {
+				name: 'DatabaseDispatcherError',
+				code: DatabaseDispatcherError.codes.DB_CONFIG_NOT_FOUND
+			});
+		});
+
+		it('should reject when database config miss the host', function() {
+
+			['foo', 1, true, ['foo', 'bar']].forEach(invalidConfig => {
+
+				mockConfig({
+					'database-invalid-config': invalidConfig
+				});
+
+				assert.throws(() => DatabaseDispatcher.getDatabaseByKey('database-invalid-config'), {
+					name: 'DatabaseDispatcherError',
+					code: DatabaseDispatcherError.codes.INVALID_DB_CONFIG
+				});
+
+				mock.stopAll();
+
+				DatabaseDispatcher.clearCache();
+
+			});
+		});
+
+		it('should reject when database config miss the host', function() {
+
+			mockConfig({
+				'database-no-host': {}
+			});
+
+			assert.throws(() => DatabaseDispatcher.getDatabaseByKey('database-no-host'), {
+				name: 'DatabaseDispatcherError',
+				code: DatabaseDispatcherError.codes.DB_CONFIG_INVALID_HOST
+			});
+		});
+
+		it('should reject when database config miss the type', function() {
+
+			mockConfig({
+				'database-no-type': {
+					host: 'my-host'
+				}
+			});
+
+			assert.throws(() => DatabaseDispatcher.getDatabaseByKey('database-no-type'), {
+				name: 'DatabaseDispatcherError',
+				code: DatabaseDispatcherError.codes.DB_CONFIG_TYPE_INVALID
+			});
+		});
+
+		it('should reject when database config have a not alloed type', function() {
+
+			mockConfig({
+				'database-not-allowed-type': {
+					host: 'my-host',
+					type: 'not-allowed-type'
+				}
+			});
+
+			assert.throws(() => DatabaseDispatcher.getDatabaseByKey('database-not-allowed-type'), {
+				name: 'DatabaseDispatcherError',
+				code: DatabaseDispatcherError.codes.DB_CONFIG_TYPE_NOT_ALLOWED
+			});
+		});
+
+		it('should return a driver instance if is installed', function() {
+
+			mockConfig({
+				'my-database': {
+					host: 'my-host',
+					type: 'mysql'
+				}
+			});
+
+			databaseMock();
+
+			let DBDriver;
+
+			assert.doesNotThrow(() => {
+				DBDriver = DatabaseDispatcher.getDatabaseByKey('my-database');
+			});
+
+			const dbDriver = new DBDriver();
+
+			assert(dbDriver.constructor.name === 'DBDriverMock');
+		});
+
+		it('should return a driver instance if is installed using _default key', function() {
+
+			mockConfig({
+				_default: {
+					host: 'my-host',
+					type: 'mysql'
+				}
+			});
+
+			databaseMock();
+
+			let DBDriver;
+
+			assert.doesNotThrow(() => {
+				DBDriver = DatabaseDispatcher.getDatabaseByKey();
+			});
+
+			const dbDriver = new DBDriver();
+
+			assert(dbDriver.constructor.name === 'DBDriverMock');
+		});
+	});
+
 });
