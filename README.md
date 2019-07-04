@@ -3,7 +3,9 @@
 [![Build Status](https://travis-ci.org/janis-commerce/database-dispatcher.svg?branch=master)](https://travis-ci.org/janis-commerce/database-dispatcher)
 [![Coverage Status](https://coveralls.io/repos/github/janis-commerce/database-dispatcher/badge.svg?branch=master)](https://coveralls.io/github/janis-commerce/database-dispatcher?branch=master)
 
-**DatabaseDispatcher** is a package that returns the necessary DB driver from a received model. Access to the databases configuration then returns the driver instance with the connection. It caches the connections and configs.
+**DatabaseDispatcher** is a package that returns the necessary DB driver from a received model.
+Access to the databases configuration then returns the driver instance with the connection.
+It caches the driver per host.
 
 ## Installation
 
@@ -17,9 +19,11 @@ npm install --save @janiscommerce/mongodb
 
 ## Configs
 
-This package requires a config file: `/path/to/root/config/database.json`
+The package allows you to have 2 sources for configs.
 
-### Structure
+### Config file: `/path/to/root/config/database.json`
+
+#### Structure
 
 - Root key: the model `databaseKey`
 Includes the driver type and connections settings.
@@ -37,45 +41,80 @@ Keys
 
 - `type [String]` (required): Database driver type, example `"mysql"`.
 - `host [String]` (required): Database connection host.
-- `port [Number]` (required): Database connection port.
+- `database [String]` (required): Database name for connection, example `"myDB"`.
+- `port [Number]` (optional): Database connection port.
 - `user [String]` (optional): Database login user name.
 - `password [String]` (optional): Database login password.
-- `database [String]` (required): Database name for connection, example `"myDB"`.
-- `connectionLimit [Number]` (optional): Connection limit.
-- `prefix [String]` (optional): Prefix for values.
 
-### Example
+#### Example
 
 ```json
 {
     "core": {
         "type": "mysql",
         "host": "localhost",
-        "user": "root",
         "database": "myDB",
+        "user": "root",
+        "password": "sercure654321",
         "port": 3306
     },
-    "services": {
+    "service": {
         "type": "mongodb",
         "host": "mongodb://localhost",
-        "user": "sarasa",
-        "password": "foobar",
         "database": "myDB",
-        "port": 27017
+        "user": "user",
+        "password": "user123456"
     }
 }
 ```
 
+### Environment Variables
+You can easly have the connection configs in environment variables using the followin structure.
+
+#### Structure
+Allows multiple DB connections having a group of varaibles per connection replacing `[KEY]` for your database identification.
+
+```
+DB_[KEY]_HOST
+DB_[KEY]_TYPE
+DB_[KEY]_DATABASE
+DB_[KEY]_USER
+DB_[KEY]_PASSWORD
+DB_[KEY]_PORT
+```
+
+#### Required fields
+* HOST
+* TYPE
+* DATABASE
+
+#### Example
+```bash
+DB_CORE_HOST = "http://my-host.com";
+DB_CORE_TYPE = "mysql";
+DB_CORE_DATABASE = "my-mysql-db-name";
+DB_CORE_USER = "me";
+DB_CORE_PASSWORD = "sosecure123";
+
+DB_SERVICE_HOST = "http://my-service-host.com";
+DB_SERVICE_TYPE = "mongodb";
+DB_SERVICE_DATABASE = "my-mongo-db-name";
+DB_CORE_USER = "me";
+DB_CORE_PASSWORD = "evenmoresecure123";
+```
+
 ## API
 
-- `config`
-Returns the loaded database config json.
-- `getDatabase("databaseKey")`
-Receives the database key `[String]` then returns the database driver instance with the connection from the config json.
-If the `databaseKey` not exists on the config json will throw a `DatabaseDispatcherError`.
+* **getDatabaseByKey(databaseKey)**
+Receives the database key `[String]` and returns the database driver instance associeted to a config.
+If the `databaseKey` dosen't exists in any config source will throw a `DatabaseDispatcherError`.
 The default value of `databaseKey` parameter is `"_default"`.
-- `clearCaches()`
-Clear all caches, including configs and DB connections.
+
+* **getDatabaseByConfig(config)**
+Receives the config `[Object]` and returns the database driver instance.
+
+* **clearCache()**
+Clear the internal cache, including config and DB connections.
 
 ## Errors
 
@@ -83,38 +122,35 @@ The errors are informed with a `DatabaseDispatcherError`.
 This object has a code that can be useful for a correct error handling.
 The codes are the following:
 
-| Code | Description                        |
-|------|------------------------------------|
-| 1    | Config not found                   |
-| 2    | Invalid databaseKey                |
-| 3    | Database driver not installed      |
-| 4    | Invald config                      |
-| 5    | Invalid db type in config          |
-| 6    | DB type setting not found in config|
+| Code | Description                                          |
+|------|------------------------------------------------------|
+| 1    | Config not found                                     |
+| 2    | Invalid config file                                  |
+| 3    | Config not found for databaseKey in config file      |
+| 4    | Invald config found in config file for a databaseKey |
+| 5    | Invalid host                                         |
+| 6    | DB Type (driver) not found or invalid                |
+| 7    | Type not allowed (driver)                            |
+| 8    | Database name not found or invalid                   |
+| 9    | DB Driver not installed                              |
 
 ## Usage
 
 ```js
 const DatabaseDispatcher = require('@janiscommerce/database-dispatcher');
 
-const DBConfig = DatabaseDispatcher.config;
-
 /*
+	/path/to/database.json
     core: {
         type: 'mysql',
-        host: 'foo',
-        ...
-    },
-    services: {
-        type: 'mongodb',
         host: 'foo',
         ...
     }
 */
 
-const myDBConnection = DatabaseDispatcher.getDatabase('core'); // A new DBDriver instance is returned.
+const myDBConnection = DatabaseDispatcher.getDatabaseByKey('core'); // A new DBDriver instance is returned.
 
-let fields = myDBConnection.get(model, { item: 'sarasa' }); // should connect to db driver and return the items...
+console.log(myDBConnection); // expected output: DBDriver see @janiscommerce/mysql and @janiscommerce/mongodb
 
-DatabaseDispatcher.clearCaches(); // cached connections and configs cleared.
+DatabaseDispatcher.clearCache(); // cached connections and configs cleared.
 ```

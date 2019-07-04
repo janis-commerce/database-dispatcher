@@ -74,17 +74,40 @@ describe('DatabaseDispatcher', function() {
 		}
 	};
 
+	const assertThrows = (errorCode, dbKey = 'foo') => {
+		assert.throws(() => DatabaseDispatcher.getDatabaseByKey(dbKey), {
+			name: 'DatabaseDispatcherError',
+			code: errorCode
+		});
+	};
+
 	context('when no config file found', function() {
 
 		context('when no ENV vars for key are setted', function() {
 
-			it('should reject trying to getDatabaseByKey', function() {
-				assert.throws(() => DatabaseDispatcher.getDatabaseByKey('foo'), {
-					name: 'DatabaseDispatcherError',
-					code: DatabaseDispatcherError.codes.CONFIG_NOT_FOUND
-				});
+			it('should reject if host is missing', function() {
+
+				setEnvVar('DB_FOO_TYPE', 'mysql');
+				setEnvVar('DB_FOO_DATABASE', 'db-name');
+
+				assertThrows(DatabaseDispatcherError.codes.CONFIG_NOT_FOUND);
 			});
 
+			it('should reject if type is missing', function() {
+
+				setEnvVar('DB_FOO_HOST', 'http://my-host.com');
+				setEnvVar('DB_FOO_DATABASE', 'db-name');
+
+				assertThrows(DatabaseDispatcherError.codes.CONFIG_NOT_FOUND);
+			});
+
+			it('should reject if database is missing', function() {
+
+				setEnvVar('DB_FOO_HOST', 'http://my-host.com');
+				setEnvVar('DB_FOO_TYPE', 'mysql');
+
+				assertThrows(DatabaseDispatcherError.codes.CONFIG_NOT_FOUND);
+			});
 		});
 
 		context('when ENV vars for key are setted', function() {
@@ -93,30 +116,25 @@ describe('DatabaseDispatcher', function() {
 
 				setEnvVar('DB_FOO_HOST', 'my-host');
 				setEnvVar('DB_FOO_TYPE', 'unknown-type');
+				setEnvVar('DB_FOO_DATABASE', 'db-name');
 
-				assert.throws(() => DatabaseDispatcher.getDatabaseByKey('foo'), {
-					name: 'DatabaseDispatcherError',
-					code: DatabaseDispatcherError.codes.DB_CONFIG_TYPE_NOT_ALLOWED
-				});
-
+				assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_TYPE_NOT_ALLOWED);
 			});
 
 			it('should if driver is not installed', function() {
 
 				setEnvVar('DB_FOO_HOST', 'my-host');
 				setEnvVar('DB_FOO_TYPE', 'mysql');
+				setEnvVar('DB_FOO_DATABASE', 'db-name');
 
-				assert.throws(() => DatabaseDispatcher.getDatabaseByKey('foo'), {
-					name: 'DatabaseDispatcherError',
-					code: DatabaseDispatcherError.codes.DB_DRIVER_NOT_INSTALLED
-				});
-
+				assertThrows(DatabaseDispatcherError.codes.DB_DRIVER_NOT_INSTALLED);
 			});
 
 			it('should return a driver instance if is installed', function() {
 
 				setEnvVar('DB_FOO_HOST', 'my-host');
 				setEnvVar('DB_FOO_TYPE', 'mysql');
+				setEnvVar('DB_FOO_DATABASE', 'db-name');
 
 				databaseMock();
 
@@ -137,6 +155,7 @@ describe('DatabaseDispatcher', function() {
 
 				setEnvVar('DB_FOO_HOST', 'my-host');
 				setEnvVar('DB_FOO_TYPE', 'mysql');
+				setEnvVar('DB_FOO_DATABASE', 'db-name');
 
 				databaseMock();
 
@@ -152,6 +171,7 @@ describe('DatabaseDispatcher', function() {
 				sandbox.assert.calledWithExactly(spyDBDriver, {
 					host: 'my-host',
 					type: 'mysql',
+					database: 'db-name',
 					user: undefined,
 					password: undefined,
 					port: undefined
@@ -169,11 +189,7 @@ describe('DatabaseDispatcher', function() {
 
 			mockConfig(['foo']);
 
-			assert.throws(() => DatabaseDispatcher.getDatabaseByKey('foo'), {
-				name: 'DatabaseDispatcherError',
-				code: DatabaseDispatcherError.codes.INVALID_CONFIG_FILE
-			});
-
+			assertThrows(DatabaseDispatcherError.codes.INVALID_CONFIG_FILE);
 		});
 	});
 
@@ -183,10 +199,7 @@ describe('DatabaseDispatcher', function() {
 
 			mockConfig(validConfig);
 
-			assert.throws(() => DatabaseDispatcher.getDatabaseByKey('unknown-database-key'), {
-				name: 'DatabaseDispatcherError',
-				code: DatabaseDispatcherError.codes.DB_CONFIG_NOT_FOUND
-			});
+			assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_NOT_FOUND, 'unknown-database-key');
 		});
 
 		it('should reject when database config miss the host', function() {
@@ -197,15 +210,11 @@ describe('DatabaseDispatcher', function() {
 					'database-invalid-config': invalidConfig
 				});
 
-				assert.throws(() => DatabaseDispatcher.getDatabaseByKey('database-invalid-config'), {
-					name: 'DatabaseDispatcherError',
-					code: DatabaseDispatcherError.codes.INVALID_DB_CONFIG
-				});
+				assertThrows(DatabaseDispatcherError.codes.INVALID_DB_CONFIG, 'database-invalid-config');
 
 				mock.stopAll();
 
 				DatabaseDispatcher.clearCache();
-
 			});
 		});
 
@@ -215,39 +224,44 @@ describe('DatabaseDispatcher', function() {
 				'database-no-host': {}
 			});
 
-			assert.throws(() => DatabaseDispatcher.getDatabaseByKey('database-no-host'), {
-				name: 'DatabaseDispatcherError',
-				code: DatabaseDispatcherError.codes.DB_CONFIG_INVALID_HOST
-			});
+			assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_INVALID_HOST, 'database-no-host');
 		});
 
 		it('should reject when database config miss the type', function() {
 
 			mockConfig({
 				'database-no-type': {
-					host: 'my-host'
+					host: 'my-host',
+					database: 'db-name'
 				}
 			});
 
-			assert.throws(() => DatabaseDispatcher.getDatabaseByKey('database-no-type'), {
-				name: 'DatabaseDispatcherError',
-				code: DatabaseDispatcherError.codes.DB_CONFIG_TYPE_INVALID
-			});
+			assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_TYPE_INVALID, 'database-no-type');
 		});
 
-		it('should reject when database config have a not alloed type', function() {
+		it('should reject when database config have a not allowed type', function() {
 
 			mockConfig({
 				'database-not-allowed-type': {
 					host: 'my-host',
-					type: 'not-allowed-type'
+					type: 'not-allowed-type',
+					database: 'db-name'
 				}
 			});
 
-			assert.throws(() => DatabaseDispatcher.getDatabaseByKey('database-not-allowed-type'), {
-				name: 'DatabaseDispatcherError',
-				code: DatabaseDispatcherError.codes.DB_CONFIG_TYPE_NOT_ALLOWED
+			assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_TYPE_NOT_ALLOWED, 'database-not-allowed-type');
+		});
+
+		it('should reject when database config miss the database', function() {
+
+			mockConfig({
+				'database-no-database': {
+					host: 'my-host',
+					type: 'mysql'
+				}
 			});
+
+			assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_INVALID_DATABASE, 'database-no-database');
 		});
 
 		it('should return a driver instance if is installed', function() {
@@ -255,7 +269,8 @@ describe('DatabaseDispatcher', function() {
 			mockConfig({
 				'my-database': {
 					host: 'my-host',
-					type: 'mysql'
+					type: 'mysql',
+					database: 'db-name'
 				}
 			});
 
@@ -277,7 +292,8 @@ describe('DatabaseDispatcher', function() {
 			mockConfig({
 				_default: {
 					host: 'my-host',
-					type: 'mysql'
+					type: 'mysql',
+					database: 'db-name'
 				}
 			});
 
