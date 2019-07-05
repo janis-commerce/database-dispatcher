@@ -116,6 +116,7 @@ The codes are the following:
 | 7    | Type not allowed (driver)                            |
 | 8    | Database name not found or invalid                   |
 | 9    | DB Driver not installed                              |
+| 10   | Invalid DB Driver (not a valid Class)                |
 
 ## Usage
 

@@ -47,9 +47,9 @@ describe('DatabaseDispatcher', function() {
 		}
 	}
 
-	const databaseMock = () => {
-		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mysql'), DBDriverMock);
-		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mongodb'), DBDriverMock);
+	const databaseMock = dbDriverMock => {
+		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mysql'), dbDriverMock || DBDriverMock);
+		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mongodb'), dbDriverMock || DBDriverMock);
 	};
 
 	const mockConfig = dbConfig => sandbox.stub(Settings, 'get').returns(dbConfig);
@@ -136,7 +136,7 @@ describe('DatabaseDispatcher', function() {
 				assertThrows(DatabaseDispatcherError.codes.DB_DRIVER_NOT_INSTALLED);
 			});
 
-			it('should return a driver instance if is installed', function() {
+			it('should return a driver class if is installed', function() {
 
 				setEnvVar('DB_FOO_HOST', 'my-host');
 				setEnvVar('DB_FOO_TYPE', 'mysql');
@@ -144,13 +144,11 @@ describe('DatabaseDispatcher', function() {
 
 				databaseMock();
 
-				let DBDriver;
+				let dbDriver;
 
 				assert.doesNotThrow(() => {
-					DBDriver = DatabaseDispatcher.getDatabaseByKey('foo');
+					dbDriver = DatabaseDispatcher.getDatabaseByKey('foo');
 				});
-
-				const dbDriver = new DBDriver();
 
 				assert(dbDriver instanceof DBDriverMock);
 			});
@@ -188,7 +186,7 @@ describe('DatabaseDispatcher', function() {
 		});
 	});
 
-	context('when invalid config file found', function() {
+	context('when invalid Settings setted', function() {
 
 		it('should reject', function() {
 
@@ -198,7 +196,7 @@ describe('DatabaseDispatcher', function() {
 		});
 	});
 
-	context('when valid config file found', function() {
+	context('when valid Settings setted', function() {
 
 		it('should reject when database config not found for that key', function() {
 
@@ -269,6 +267,21 @@ describe('DatabaseDispatcher', function() {
 			assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_INVALID_DATABASE, 'database-no-database');
 		});
 
+		it('should reject when DBDriver is not a constructor', function() {
+
+			mockConfig({
+				'my-database': {
+					host: 'my-host',
+					type: 'mysql',
+					database: 'db-name'
+				}
+			});
+
+			databaseMock(['invalid driver']);
+
+			assertThrows(DatabaseDispatcherError.codes.INVALID_DB_DRIVER, 'my-database');
+		});
+
 		it('should return a driver instance if is installed', function() {
 
 			mockConfig({
@@ -281,13 +294,11 @@ describe('DatabaseDispatcher', function() {
 
 			databaseMock();
 
-			let DBDriver;
+			let dbDriver;
 
 			assert.doesNotThrow(() => {
-				DBDriver = DatabaseDispatcher.getDatabaseByKey('my-database');
+				dbDriver = DatabaseDispatcher.getDatabaseByKey('my-database');
 			});
-
-			const dbDriver = new DBDriver();
 
 			assert(dbDriver.constructor.name === 'DBDriverMock');
 		});
@@ -304,16 +315,15 @@ describe('DatabaseDispatcher', function() {
 
 			databaseMock();
 
-			let DBDriver;
+			let dbDriver;
 
 			assert.doesNotThrow(() => {
-				DBDriver = DatabaseDispatcher.getDatabaseByKey();
+				dbDriver = DatabaseDispatcher.getDatabaseByKey();
 			});
-
-			const dbDriver = new DBDriver();
 
 			assert(dbDriver.constructor.name === 'DBDriverMock');
 		});
+
 	});
 
 });
