@@ -1,6 +1,6 @@
 {
   "name": "@janiscommerce/database-dispatcher",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Database dispatcher",
   "main": "index.js",
   "scripts": {
@@ -33,5 +33,8 @@
   ],
   "directories": {
     "test": "tests"
+  },
+  "dependencies": {
+    "@janiscommerce/settings": "^1.0.0"
   }
 }

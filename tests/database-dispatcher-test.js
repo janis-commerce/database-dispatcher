@@ -4,6 +4,8 @@ const assert = require('assert');
 const mock = require('mock-require');
 const path = require('path');
 
+const Settings = require('@janiscommerce/settings');
+
 const sandbox = require('sinon').createSandbox();
 
 const DatabaseDispatcher = require('./../index');
@@ -50,9 +52,7 @@ describe('DatabaseDispatcher', function() {
 		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mongodb'), DBDriverMock);
 	};
 
-	const mockConfig = config => {
-		mock(path.join(process.cwd(), 'config', 'database.json'), config);
-	};
+	const mockConfig = dbConfig => sandbox.stub(Settings, 'get').returns(dbConfig);
 
 	const validConfig = {
 		foo: {
@@ -81,16 +81,22 @@ describe('DatabaseDispatcher', function() {
 		});
 	};
 
-	context('when no config file found', function() {
+	context('when no Settings for database', function() {
 
-		context('when no ENV vars for key are setted', function() {
+		context('when incomplete ENV vars setted and no Settings found for key', function() {
+
+			const test = () => assertThrows(DatabaseDispatcherError.codes.SETTINGS_NOT_FOUND);
+
+			it('should reject if all vars are missing', function() {
+				test();
+			});
 
 			it('should reject if host is missing', function() {
 
 				setEnvVar('DB_FOO_TYPE', 'mysql');
 				setEnvVar('DB_FOO_DATABASE', 'db-name');
 
-				assertThrows(DatabaseDispatcherError.codes.CONFIG_NOT_FOUND);
+				test();
 			});
 
 			it('should reject if type is missing', function() {
@@ -98,7 +104,7 @@ describe('DatabaseDispatcher', function() {
 				setEnvVar('DB_FOO_HOST', 'http://my-host.com');
 				setEnvVar('DB_FOO_DATABASE', 'db-name');
 
-				assertThrows(DatabaseDispatcherError.codes.CONFIG_NOT_FOUND);
+				test();
 			});
 
 			it('should reject if database is missing', function() {
@@ -106,7 +112,7 @@ describe('DatabaseDispatcher', function() {
 				setEnvVar('DB_FOO_HOST', 'http://my-host.com');
 				setEnvVar('DB_FOO_TYPE', 'mysql');
 
-				assertThrows(DatabaseDispatcherError.codes.CONFIG_NOT_FOUND);
+				test();
 			});
 		});
 
@@ -151,7 +157,7 @@ describe('DatabaseDispatcher', function() {
 
 			it('should return the cached driver instance on successive calls', function() {
 
-				const spyDBDriver = sandbox.spy(DatabaseDispatcher, '_getDBDriver');
+				sandbox.spy(DatabaseDispatcher, '_getDBDriver');
 
 				setEnvVar('DB_FOO_HOST', 'my-host');
 				setEnvVar('DB_FOO_TYPE', 'mysql');
@@ -167,8 +173,8 @@ describe('DatabaseDispatcher', function() {
 					SameDBDriver = DatabaseDispatcher.getDatabaseByKey('foo');
 				});
 
-				sandbox.assert.calledOnce(spyDBDriver);
-				sandbox.assert.calledWithExactly(spyDBDriver, {
+				sandbox.assert.calledOnce(DatabaseDispatcher._getDBDriver); // eslint-disable-line
+				sandbox.assert.calledWithExactly(DatabaseDispatcher._getDBDriver, { // eslint-disable-line
 					host: 'my-host',
 					type: 'mysql',
 					database: 'db-name',
@@ -179,7 +185,6 @@ describe('DatabaseDispatcher', function() {
 
 				assert.deepEqual(DBDriver, SameDBDriver);
 			});
-
 		});
 	});
 
@@ -189,7 +194,7 @@ describe('DatabaseDispatcher', function() {
 
 			mockConfig(['foo']);
 
-			assertThrows(DatabaseDispatcherError.codes.INVALID_CONFIG_FILE);
+			assertThrows(DatabaseDispatcherError.codes.INVALID_SETTINGS);
 		});
 	});
 
@@ -212,7 +217,7 @@ describe('DatabaseDispatcher', function() {
 
 				assertThrows(DatabaseDispatcherError.codes.INVALID_DB_CONFIG, 'database-invalid-config');
 
-				mock.stopAll();
+				Settings.get.restore();
 
 				DatabaseDispatcher.clearCache();
 			});

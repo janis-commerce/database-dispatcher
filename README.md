@@ -17,56 +17,39 @@ npm install --save @janiscommerce/mysql
 npm install --save @janiscommerce/mongodb
 ```
 
-## Configs
-
+## Settings
 The package allows you to have 2 sources for configs.
 
-### Config file: `/path/to/root/config/database.json`
+### Config file with Settings Package
+1. Using [Settings](https://www.npmjs.com/package/@janiscommerce/settings), with settings in JSON file `/path/to/root/.janiscommercerc.json` into the key `database`:
 
-#### Structure
-
-- Root key: the model `databaseKey`
-Includes the driver type and connections settings.
-
-```js
+```json
 {
-    "databaseKey": {
-        "type": "mysql"
-        // ...
-    }
+	"database": {
+		"core": {
+			"type": "mysql",
+			"host": "http://my-host-name.com",
+			"database": "my-database"
+			// ...
+		},
+		"other": {
+			"type": "mongodb",
+			"host": "http://other-host-name.com",
+			"database": "my-database"
+			// ...
+		}
+	}
 }
 ```
 
-Keys
+*Keys*
 
 - `type [String]` (required): Database driver type, example `"mysql"`.
 - `host [String]` (required): Database connection host.
 - `database [String]` (required): Database name for connection, example `"myDB"`.
-- `port [Number]` (optional): Database connection port.
 - `user [String]` (optional): Database login user name.
 - `password [String]` (optional): Database login password.
-
-#### Example
-
-```json
-{
-    "core": {
-        "type": "mysql",
-        "host": "localhost",
-        "database": "myDB",
-        "user": "root",
-        "password": "sercure654321",
-        "port": 3306
-    },
-    "service": {
-        "type": "mongodb",
-        "host": "mongodb://localhost",
-        "database": "myDB",
-        "user": "user",
-        "password": "user123456"
-    }
-}
-```
+- `port [Number]` (optional): Database connection port.
 
 ### Environment Variables
 You can easly have the connection configs in environment variables using the followin structure.
@@ -99,8 +82,8 @@ DB_CORE_PASSWORD = "sosecure123";
 DB_SERVICE_HOST = "http://my-service-host.com";
 DB_SERVICE_TYPE = "mongodb";
 DB_SERVICE_DATABASE = "my-mongo-db-name";
-DB_CORE_USER = "me";
-DB_CORE_PASSWORD = "evenmoresecure123";
+DB_SERVICE_USER = "me";
+DB_SERVICE_PASSWORD = "evenmoresecure123";
 ```
 
 ## API
@@ -124,10 +107,10 @@ The codes are the following:
 
 | Code | Description                                          |
 |------|------------------------------------------------------|
-| 1    | Config not found                                     |
-| 2    | Invalid config file                                  |
-| 3    | Config not found for databaseKey in config file      |
-| 4    | Invald config found in config file for a databaseKey |
+| 1    | Settings not found                                   |
+| 2    | Invalid settings                                     |
+| 3    | ConfigDB not found for databaseKey in Settings       |
+| 4    | Invald ConfigDB found in Settings for a databaseKey  |
 | 5    | Invalid host                                         |
 | 6    | DB Type (driver) not found or invalid                |
 | 7    | Type not allowed (driver)                            |
