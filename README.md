@@ -52,7 +52,7 @@ The package allows you to have 2 sources for configs.
 
 - `type [String]` (required): Database driver type, example `"mysql"`.
 - `host [String]` (required): Database connection host.
-- `database [String]` (required): Database name for connection, example `"myDB"`.
+- `database [String]` (optional): Database name for connection, example `"myDB"`.
 - `user [String]` (optional): Database login user name.
 - `password [String]` (optional): Database login password.
 - `port [Number]` (optional): Database connection port.

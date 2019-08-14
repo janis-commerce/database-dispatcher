@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Added
 - `elasticsearch` DBDriver support
+### Changed
+- `validateConfig()` method now allows a config without `database` field, but stills veryfing it when exists.
 
 ## [1.3.3] - 2019-07-17
 ### Fixed
