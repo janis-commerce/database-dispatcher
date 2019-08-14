@@ -264,12 +264,13 @@ describe('DatabaseDispatcher', function() {
 			assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_TYPE_NOT_ALLOWED, 'database-not-allowed-type');
 		});
 
-		it('should reject when database config miss the database', function() {
+		it('should reject when database config contains an invalid database', function() {
 
 			mockConfig({
 				'database-no-database': {
 					host: 'my-host',
-					type: 'mysql'
+					type: 'mysql',
+					database: ['no-string-database']
 				}
 			});
 
@@ -298,6 +299,26 @@ describe('DatabaseDispatcher', function() {
 					host: 'my-host',
 					type: 'mysql',
 					database: 'db-name'
+				}
+			});
+
+			databaseMock();
+
+			let dbDriver;
+
+			assert.doesNotThrow(() => {
+				dbDriver = DatabaseDispatcher.getDatabaseByKey('my-database');
+			});
+
+			assert(dbDriver.constructor.name === 'DBDriverMock');
+		});
+
+		it('should return a driver instance if is installed when the config does\'t include a database field', function() {
+
+			mockConfig({
+				'my-database': {
+					host: 'my-host',
+					type: 'elasticsearch'
 				}
 			});
 
