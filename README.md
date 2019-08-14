@@ -15,6 +15,7 @@ npm install @janiscommerce/database-dispatcher
 # Then install all the drivers that you need.
 npm install --save @janiscommerce/mysql
 npm install --save @janiscommerce/mongodb
+npm install --save @janiscommerce/elasticsearch
 ```
 
 ## Settings
@@ -36,6 +37,11 @@ The package allows you to have 2 sources for configs.
 			"type": "mongodb",
 			"host": "http://other-host-name.com",
 			"database": "my-database"
+			// ...
+		},
+		"another": {
+			"type": "elasticsearch",
+			"host": "http://another-host-name.com",
 			// ...
 		}
 	}
