@@ -50,6 +50,7 @@ describe('DatabaseDispatcher', function() {
 	const databaseMock = dbDriverMock => {
 		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mysql'), dbDriverMock || DBDriverMock);
 		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mongodb'), dbDriverMock || DBDriverMock);
+		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/elasticsearch'), dbDriverMock || DBDriverMock);
 	};
 
 	const mockConfig = dbConfig => sandbox.stub(Settings, 'get').returns(dbConfig);
@@ -61,6 +62,14 @@ describe('DatabaseDispatcher', function() {
 			user: 'root',
 			password: 'foobar',
 			database: 'my_db',
+			port: '1234'
+		},
+
+		bar: {
+			type: 'elasticsearch',
+			host: 'foo',
+			user: 'root',
+			password: 'foobar',
 			port: '1234'
 		},
 
