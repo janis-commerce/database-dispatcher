@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - `elasticsearch` DBDriver support
 ### Changed
-- `validateConfig()` method now allows a config without `database` field, but stills veryfing it when exists.
+- `dbTypes` getter now includes package name and database requirement
+- `validateConfig()` method rejects when the database config is invalid only when the DBDriver requires it.
 
 ## [1.3.3] - 2019-07-17
 ### Fixed

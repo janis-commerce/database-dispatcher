@@ -52,10 +52,13 @@ The package allows you to have 2 sources for configs.
 
 - `type [String]` (required): Database driver type, example `"mysql"`.
 - `host [String]` (required): Database connection host.
-- `database [String]` (optional): Database name for connection, example `"myDB"`.
 - `user [String]` (optional): Database login user name.
 - `password [String]` (optional): Database login password.
 - `port [Number]` (optional): Database connection port.
+- `database [String]`: Database name for connection, example `"myDB"`.  
+
+#### Required fields
+* `database`: Some DBDrivers may require this field, for example, MongoDB and MySQL requires it, but elasticsearch doesn't.
 
 ### Environment Variables
 You can easly have the connection configs in environment variables using the followin structure.
@@ -75,7 +78,7 @@ DB_[KEY]_PORT
 #### Required fields
 * HOST
 * TYPE
-* DATABASE
+* DATABASE: Some DBDrivers may require this field, such as MongoDB and MySQL.
 
 #### Example
 ```bash
