@@ -58,6 +58,8 @@ The package allows you to have 2 sources for configs.
 - `database [String]`: Database name for connection, example `"myDB"`.  
 
 #### Required fields
+* `type`: Always required
+* `host`: Always required
 * `database`: Some DBDrivers may require this field, for example, MongoDB and MySQL requires it, but elasticsearch doesn't.
 
 ### Environment Variables
