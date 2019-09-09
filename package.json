@@ -35,6 +35,7 @@
     "test": "tests"
   },
   "dependencies": {
-    "@janiscommerce/settings": "^1.0.1"
+    "@janiscommerce/settings": "^1.0.1",
+    "md5": "^2.2.1"
   }
 }
