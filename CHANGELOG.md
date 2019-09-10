@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `getDatabaseByClient()` method to return database instance from a client object
+
+### Changed
+- Settings to mapp aliases from client object
+- Settings to have a default database, `databaseWriteType`
+- Caché now stores by config properties
+
+### Deprecated  
+- `ENV` vars configs
+
+### Removed
+- Database Validation for `host`, `port`, `database`
+- DBDrivers support limitation
 
 ## [1.4.0] - 2019-08-21
 ### Added

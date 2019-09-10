@@ -5,7 +5,7 @@
 
 **DatabaseDispatcher** is a package that returns the necessary DB driver from a received model.
 Access to the databases configuration then returns the driver instance with the connection.
-It caches the driver per host.
+It caches the driver per properties.
 
 ## Installation
 
@@ -16,13 +16,12 @@ npm install @janiscommerce/database-dispatcher
 npm install --save @janiscommerce/mysql
 npm install --save @janiscommerce/mongodb
 npm install --save @janiscommerce/elasticsearch
+# or any other DBDriver if it's exists
 ```
 
 ## Settings
-The package allows you to have 2 sources for configs.
 
-### Config file with Settings Package
-1. Using [Settings](https://www.npmjs.com/package/@janiscommerce/settings), with settings in JSON file `/path/to/root/.janiscommercerc.json` into the key `database`:
+Config file with [Settings package](https://www.npmjs.com/package/@janiscommerce/settings), with settings in JSON file `/path/to/root/.janiscommercerc.json` into the key `database`, `clients`, `databaseWriteType`, `databaseReadType`:
 
 ```json
 {
@@ -44,68 +43,102 @@ The package allows you to have 2 sources for configs.
 			"host": "http://another-host-name.com",
 			// ...
 		}
+	},
+	"databaseWriteType": "mongodb",
+	"databaseReadType": "mysql",
+	"clients": {
+		"database": {
+			"fields": {
+				"write": {
+					"dbHost": "host",
+					"database": "collection"
+				},
+				"read": {
+					"url": "host",
+					"dbDatabase": "database"
+				}
+			}
+		}
 	}
 }
 ```
 
-*Keys*
+### Database Settings
 
-- `type [String]` (required): Database driver type, example `"mysql"`.
-- `host [String]` (required): Database connection host.
-- `user [String]` (optional): Database login user name.
-- `password [String]` (optional): Database login password.
-- `port [Number]` (optional): Database connection port.
-- `database [String]`: Database name for connection, example `"myDB"`.  
+- *Keys* validations depends on the *DBDriver*.
+- `type`: if it's not exist, `databaseWriteType` will be use as *default*.
 
-#### Required fields
-* `type`: Always required
-* `host`: Always required
-* `database`: Some DBDrivers may require this field, for example, MongoDB and MySQL requires it, but elasticsearch doesn't.
+### Client Settings
 
-### Environment Variables
-You can easly have the connection configs in environment variables using the followin structure.
+To assign Read and Write types of DBDrivers.
 
-#### Structure
-Allows multiple DB connections having a group of varaibles per connection replacing `[KEY]` for your database identification.
+- `databaseWriteType`: **Required**, Type of Write Database. It's the *default* DBDriver for every database.
+- `databaseReadType`: *Optional*, Type of Read Database.
 
-```
-DB_[KEY]_HOST
-DB_[KEY]_TYPE
-DB_[KEY]_DATABASE
-DB_[KEY]_USER
-DB_[KEY]_PASSWORD
-DB_[KEY]_PORT
-```
+#### Mapped Aliases of Clients Objects
 
-#### Required fields
-* HOST
-* TYPE
-* DATABASE: Some DBDrivers may require this field, such as MongoDB and MySQL.
+- `clients.database.fields.write`: For Write DB
+- `clients.database.fields.read`: For Read DB
+
+Structure:
+- `key`: Field present in *Client object*
+- `value`: Field needed in *DBDriver*
 
 #### Example
-```bash
-DB_CORE_HOST = "http://my-host.com";
-DB_CORE_TYPE = "mysql";
-DB_CORE_DATABASE = "my-mysql-db-name";
-DB_CORE_USER = "me";
-DB_CORE_PASSWORD = "sosecure123";
 
-DB_SERVICE_HOST = "http://my-service-host.com";
-DB_SERVICE_TYPE = "mongodb";
-DB_SERVICE_DATABASE = "my-mongo-db-name";
-DB_SERVICE_USER = "me";
-DB_SERVICE_PASSWORD = "evenmoresecure123";
+In `.janiscommercerc.json`
+```json
+{
+	"clients": {
+		"database": {
+			"fields": {
+				"write": {
+					"url": "host",
+					"index": "database"
+				}
+			}
+		}
+	},
+	"databaseWriteType": "elasticsearch"
+}
+```
+
+Client Object getted from Client DB
+
+```js
+client = {
+	id: '123'
+	name: 'Company',
+	url: 'http://company-host-name.com',
+	index: 'company.index'
+}
+```
+
+Config will be
+
+```js
+config = {
+	host: 'http://company-host-name.com',
+	databse: 'company.index'
+}
+
 ```
 
 ## API
 
 * **getDatabaseByKey(databaseKey)**
-Receives the database key `[String]` and returns the database driver instance associeted to a config.
+Receives the *database key* `[String]` and returns the database driver instance associeted to a config.
 If the `databaseKey` dosen't exists in any config source will throw a `DatabaseDispatcherError`.
 The default value of `databaseKey` parameter is `"_default"`.
 
 * **getDatabaseByConfig(config)**
-Receives the config `[Object]` and returns the database driver instance.
+Receives the *config* `[Object]` and returns the database driver instance.
+
+* **getDatabaseByClient(clientObject, useReadDB)**
+Receives the *client object* `[Object]` and returns the database driver instance associeted to a config.
+If `useReadDB` (`[Boolean]`) doesn't exists or it's `FALSE` will try to get *Write DBDriver Type* by default, if it's `TRUE` will try to get *Read DBDriver Type*.
+If the `databaseReadType` dosen't exists will use `databaseWriteType`.
+If the `databaseWriteType` doesn't exists will be throw a `DatabaseDispatcherError`.
 
 * **clearCache()**
 Clear the internal cache, including config and DB connections.
@@ -122,12 +155,9 @@ The codes are the following:
 | 2    | Invalid settings                                     |
 | 3    | ConfigDB not found for databaseKey in Settings       |
 | 4    | Invald ConfigDB found in Settings for a databaseKey  |
-| 5    | Invalid host                                         |
-| 6    | DB Type (driver) not found or invalid                |
-| 7    | Type not allowed (driver)                            |
-| 8    | Database name not found or invalid                   |
-| 9    | DB Driver not installed                              |
-| 10   | Invalid DB Driver (not a valid Class)                |
+| 5    | Invalid Client Object                                |
+| 6    | DB Driver not installed                              |
+| 7    | Invalid DB Driver (not a valid Class)                |
 
 ## Usage
 
@@ -135,17 +165,53 @@ The codes are the following:
 const DatabaseDispatcher = require('@janiscommerce/database-dispatcher');
 
 /*
-	/path/to/database.json
-    core: {
-        type: 'mysql',
-        host: 'foo',
-        ...
-    }
+	/path/to/.jannsicommercerc.json
+    database: {
+		core: {
+        	type: 'mysql',
+        	host: 'foo',
+        	...
+		},
+		...
+	},
+	databaseWriteType: 'mongodb',
+	databaseReadType: 'elasticsearch',
+	clients: {
+		database: {
+			fields: {
+				write: {
+					dbHost: 'host'
+				},
+				read: {
+					url: 'host',
+					index: 'database'
+				}
+			}
+		}
+	},
+	...
 */
 
+// Get by Key
 const myDBConnection = DatabaseDispatcher.getDatabaseByKey('core'); // A new DBDriver instance is returned.
 
-console.log(myDBConnection); // expected output: DBDriver see @janiscommerce/mysql and @janiscommerce/mongodb
+console.log(myDBConnection); // expected output: DBDriver
+
+
+// Get Write DB by Client
+const client = model.getClientById('123') // Or Any method you use to get client's objects
+
+const myDBWriteConnection = DatabaseDispatcher.getDatabaseByClient(client); // A new DBDriver instance is returned.
+
+console.log(myDBWriteConnection.constructor.name); // expected output: MongoDB
+
+
+// Get Read DB by Client
+const otherClient = model.getClientById('1234') // Or Any method you use to get client's objects
+
+const myDBWriteConnection = DatabaseDispatcher.getDatabaseByClient(otherClient, true); // A new DBDriver instance is returned.
+
+console.log(myDBWriteConnection.constructor.name); // expected output: ElasticSearch
 
 DatabaseDispatcher.clearCache(); // cached connections and configs cleared.
 ```
