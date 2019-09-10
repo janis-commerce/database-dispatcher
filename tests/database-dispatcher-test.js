@@ -13,30 +13,75 @@ const DatabaseDispatcherError = require('./../lib/database-dispatcher-error');
 
 /* eslint-disable prefer-arrow-callback */
 
-describe.skip('DatabaseDispatcher', function() {
+describe('DatabaseDispatcher', () => {
 
-	const envVars = {};
-
-	const setEnvVar = (key, value) => {
-		envVars[key] = value;
-		process.env[key] = value;
+	const databasesSettings = {
+		_default: {
+			type: 'someDatabase',
+			host: 'sampleDatabase',
+			port: 1234,
+			protocol: 'sample',
+			user: 'example',
+			password: 'examplePass123',
+			database: 'databaseTable'
+		},
+		core: {
+			host: 'coreDatabase',
+			port: 1234,
+			protocol: 'core',
+			user: 'example',
+			password: 'examplePass123',
+			database: 'coreTable'
+		},
+		almostGood: {
+			type: 'someDatabase',
+			host: 'notGoodDatabase',
+			port: 1234,
+			user: 'example',
+			password: 'examplePass123',
+			database: 'notGoodTable'
+		},
+		bad: 'badDatabase:1234',
+		otherBad: ['otherDatabase', 1234, 'table']
 	};
 
-	const cleanEnvVars = () => {
-		Object.keys(envVars).forEach(key => {
-			delete process.env[key];
-		});
+	const sampleClient = {
+		dbHost: 'sampleClient',
+		dbPort: 1234,
+		dbProtocol: 'sample',
+		dbUser: 'example',
+		dbPassword: 'examplePass123',
+		dbDatabase: 'clientTable'
 	};
 
-	afterEach(() => {
-		cleanEnvVars();
-		mock.stopAll();
-		DatabaseDispatcher.clearCache();
-		sandbox.restore();
-	});
+	const clientSettings = {
+		database: {
+			fields: {
+				read: {
+					dbHost: 'host',
+					dbPort: 'port',
+					dbProtocol: 'protocol',
+					dbUser: 'user',
+					dbPassword: 'password',
+					dbDatabase: 'database'
+				},
+				write: {
+					dbHost: 'host',
+					dbPort: 'port',
+					dbProtocol: 'protocol',
+					dbUser: 'user',
+					dbPassword: 'password',
+					dbDatabase: 'database'
+				}
+			}
+		}
+	};
 
 	class DBDriverMock {
 		constructor(config = {}) {
+			if(!config.protocol)
+				throw new Error('Database Error');
+
 			this.config = {
 				host: config.host,
 				user: config.user,
@@ -48,312 +93,431 @@ describe.skip('DatabaseDispatcher', function() {
 	}
 
 	const databaseMock = dbDriverMock => {
-		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mysql'), dbDriverMock || DBDriverMock);
-		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/mongodb'), dbDriverMock || DBDriverMock);
-		mock(path.join(process.cwd(), 'node_modules', '@janiscommerce/elasticsearch'), dbDriverMock || DBDriverMock);
+		mock(path.join(process.cwd(), 'node_modules', DatabaseDispatcher.scope, 'someDatabase'), dbDriverMock || DBDriverMock);
 	};
 
-	const mockConfig = dbConfig => sandbox.stub(Settings, 'get').returns(dbConfig);
+	afterEach(() => {
+		mock.stopAll();
+		DatabaseDispatcher.clearCache();
+		sandbox.restore();
+	});
 
-	const validConfig = {
-		foo: {
-			type: 'mongodb',
-			host: 'foo',
-			user: 'root',
-			password: 'foobar',
-			database: 'my_db',
-			port: '1234'
-		},
-
-		bar: {
-			type: 'elasticsearch',
-			host: 'foo',
-			user: 'root',
-			password: 'foobar',
-			port: '1234'
-		},
-
-		_default: {
-			type: 'mysql',
-			host: 'foo',
-			user: 'root',
-			password: 'foobar',
-			database: 'my_db',
-			port: '1234'
-		}
+	const assertSettings = (calledTimes, args) => {
+		sandbox.assert.callCount(Settings.get, calledTimes);
+		args.forEach(argument => sandbox.assert.calledWithExactly(Settings.get, argument));
 	};
 
-	const assertThrows = (errorCode, dbKey = 'foo') => {
-		assert.throws(() => DatabaseDispatcher.getDatabaseByKey(dbKey), {
-			name: 'DatabaseDispatcherError',
-			code: errorCode
-		});
+	const assertThrowDatabaseKey = (errorCode, key) => {
+		assert.throws(() => DatabaseDispatcher.getDatabaseByKey(key), { code: errorCode });
 	};
 
-	context('when no Settings for database', function() {
+	const assertThrowDatabaseClient = (errorCode, client, readOnly) => {
+		assert.throws(() => DatabaseDispatcher.getDatabaseByClient(client, readOnly), { code: errorCode });
+	};
 
-		context('when incomplete ENV vars setted and no Settings found for key', function() {
 
-			const test = () => assertThrows(DatabaseDispatcherError.codes.SETTINGS_NOT_FOUND);
+	context('When Settings config are missing', () => {
 
-			it('should reject if all vars are missing', function() {
-				test();
+		describe('Get Database by Key', () => {
+
+			it('Should throw error if databases key do not exist ', () => {
+
+				sandbox.stub(Settings, 'get')
+					.withArgs('database')
+					.returns();
+
+				assertThrowDatabaseKey(DatabaseDispatcherError.codes.SETTINGS_NOT_FOUND);
+				assertSettings(1, ['database']);
 			});
 
-			it('should reject if host is missing', function() {
+			it('Should throw error if the especific database key do not exist ', () => {
 
-				setEnvVar('DB_FOO_TYPE', 'mysql');
-				setEnvVar('DB_FOO_DATABASE', 'db-name');
+				sandbox.stub(Settings, 'get')
+					.withArgs('database')
+					.returns(databasesSettings);
 
-				test();
+				assertThrowDatabaseKey(DatabaseDispatcherError.codes.DB_CONFIG_NOT_FOUND, 'super');
+				assertSettings(1, ['database']);
 			});
 
-			it('should reject if type is missing', function() {
+			it('Should throw error if \'type\' is not define in configs neither \'databaseWriteType\' ', () => {
 
-				setEnvVar('DB_FOO_HOST', 'http://my-host.com');
-				setEnvVar('DB_FOO_DATABASE', 'db-name');
+				const stubSettings = sandbox.stub(Settings, 'get');
 
-				test();
-			});
+				stubSettings.withArgs('database')
+					.returns(databasesSettings);
 
-			it('should reject if database is missing', function() {
+				stubSettings.withArgs('databaseWriteType')
+					.returns();
 
-				setEnvVar('DB_FOO_HOST', 'http://my-host.com');
-				setEnvVar('DB_FOO_TYPE', 'mysql');
-
-				test();
+				assertThrowDatabaseKey(DatabaseDispatcherError.codes.DB_CONFIG_TYPE_INVALID, 'core');
+				assertSettings(2, ['database', 'databaseWriteType']);
 			});
 		});
 
-		context('when ENV vars for key are setted', function() {
+		describe('Get Database by Client', () => {
 
-			it('should reject if type is not allowed', function() {
+			it('Should throw error if no \'clients\' settings', () => {
 
-				setEnvVar('DB_FOO_HOST', 'my-host');
-				setEnvVar('DB_FOO_TYPE', 'unknown-type');
-				setEnvVar('DB_FOO_DATABASE', 'db-name');
+				sandbox.stub(Settings, 'get')
+					.withArgs('clients')
+					.returns();
 
-				assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_TYPE_NOT_ALLOWED);
+				assertThrowDatabaseClient(DatabaseDispatcherError.codes.INVALID_SETTINGS, sampleClient);
+				assertSettings(1, ['clients']);
 			});
 
-			it('should if driver is not installed', function() {
+			it('Should throw error if no \'clients.database\' settings', () => {
 
-				setEnvVar('DB_FOO_HOST', 'my-host');
-				setEnvVar('DB_FOO_TYPE', 'mysql');
-				setEnvVar('DB_FOO_DATABASE', 'db-name');
+				sandbox.stub(Settings, 'get')
+					.withArgs('clients')
+					.returns({ fields: {} });
 
-				assertThrows(DatabaseDispatcherError.codes.DB_DRIVER_NOT_INSTALLED);
+				assertThrowDatabaseClient(DatabaseDispatcherError.codes.INVALID_SETTINGS, sampleClient);
+				assertSettings(1, ['clients']);
 			});
 
-			it('should return a driver class if is installed', function() {
+			it('Should throw error if no \'clients.database.fields\' settings', () => {
 
-				setEnvVar('DB_FOO_HOST', 'my-host');
-				setEnvVar('DB_FOO_TYPE', 'mysql');
-				setEnvVar('DB_FOO_DATABASE', 'db-name');
+				sandbox.stub(Settings, 'get')
+					.withArgs('clients')
+					.returns({ database: { fakeFields: {} } });
+
+				assertThrowDatabaseClient(DatabaseDispatcherError.codes.INVALID_SETTINGS, sampleClient);
+				assertSettings(1, ['clients']);
+			});
+
+			it('Should throw error if no \'clients.database.fields.write\' settings', () => {
+
+				sandbox.stub(Settings, 'get')
+					.withArgs('clients')
+					.returns({ database: { fields: {} } });
+
+				assertThrowDatabaseClient(DatabaseDispatcherError.codes.INVALID_SETTINGS, sampleClient);
+				assertSettings(1, ['clients']);
+			});
+
+			it('Should throw error if no \'fields.read\' neither \'fields.read\' settings and try to get Read Database', () => {
+
+				sandbox.stub(Settings, 'get')
+					.withArgs('clients')
+					.returns({ database: { fields: {} } });
+
+				assertThrowDatabaseClient(DatabaseDispatcherError.codes.INVALID_SETTINGS, sampleClient);
+				assertSettings(1, ['clients']);
+			});
+
+			it('Should throw error if no \'databaseWriteType\' settings', () => {
+
+				const stubSettings = sandbox.stub(Settings, 'get');
+
+				stubSettings.withArgs('clients')
+					.returns(clientSettings);
+
+				stubSettings.withArgs('databaseWriteType')
+					.returns();
+
+				assertThrowDatabaseClient(DatabaseDispatcherError.codes.DB_CONFIG_TYPE_INVALID, sampleClient);
+				assertSettings(2, ['clients', 'databaseWriteType']);
+			});
+
+			it('Should throw error if no \'databaseReadType\' neither \'databaseWriteType\' settings and try to get Read Database', () => {
+
+				const stubSettings = sandbox.stub(Settings, 'get');
+
+				stubSettings.withArgs('clients')
+					.returns(clientSettings);
+
+				stubSettings.withArgs('databaseWriteType')
+					.returns();
+
+				stubSettings.withArgs('databaseReadType')
+					.returns();
+
+				assertThrowDatabaseClient(DatabaseDispatcherError.codes.DB_CONFIG_TYPE_INVALID, sampleClient, true);
+				assertSettings(3, ['clients', 'databaseWriteType', 'databaseReadType']);
+			});
+		});
+
+	});
+
+	context('when some data has incorrect formats', () => {
+
+		describe('Get Database By Key', () => {
+
+			it('Should throw error if the database field is not an object', () => {
+
+				sandbox.stub(Settings, 'get')
+					.withArgs('database')
+					.returns('databases');
+
+				assertThrowDatabaseKey(DatabaseDispatcherError.codes.INVALID_SETTINGS);
+				assertSettings(1, ['database']);
+			});
+
+			it('Should throw error if the database field is an array', () => {
+
+				sandbox.stub(Settings, 'get')
+					.withArgs('database')
+					.returns([databasesSettings]);
+
+				assertThrowDatabaseKey(DatabaseDispatcherError.codes.INVALID_SETTINGS);
+				assertSettings(1, ['database']);
+			});
+
+			it('Should throw error if the database key is not an object', () => {
+
+				sandbox.stub(Settings, 'get')
+					.withArgs('database')
+					.returns(databasesSettings);
+
+				assertThrowDatabaseKey(DatabaseDispatcherError.codes.INVALID_DB_CONFIG, 'bad');
+				assertSettings(1, ['database']);
+			});
+
+			it('Should throw error if the database key is an array', () => {
+
+				sandbox.stub(Settings, 'get')
+					.withArgs('database')
+					.returns(databasesSettings);
+
+				assertThrowDatabaseKey(DatabaseDispatcherError.codes.INVALID_DB_CONFIG, 'otherBad');
+				assertSettings(1, ['database']);
+			});
+		});
+
+		describe('Get Database By Client', () => {
+
+			it('Should throw error if client object is an array', () => {
+				assertThrowDatabaseClient(DatabaseDispatcherError.codes.INVALID_CLIENT, [sampleClient]);
+			});
+
+			it('Should throw error if \'clients\' settings is not an object', () => {
+
+				sandbox.stub(Settings, 'get')
+					.withArgs('clients')
+					.returns('clientDatabase');
+
+				assertThrowDatabaseClient(DatabaseDispatcherError.codes.INVALID_SETTINGS, sampleClient);
+				assertSettings(1, ['clients']);
+			});
+
+			it('Should throw error if \'clients\' settings is an array', () => {
+
+				sandbox.stub(Settings, 'get')
+					.withArgs('clients')
+					.returns([clientSettings]);
+
+				assertThrowDatabaseClient(DatabaseDispatcherError.codes.INVALID_SETTINGS, sampleClient);
+				assertSettings(1, ['clients']);
+			});
+
+			it('Should throw error if \'database.fields\' settings is an array', () => {
+
+				sandbox.stub(Settings, 'get')
+					.withArgs('clients')
+					.returns({ database: { fields: { write: ['database'] } } });
+
+				assertThrowDatabaseClient(DatabaseDispatcherError.codes.INVALID_SETTINGS, sampleClient);
+				assertSettings(1, ['clients']);
+			});
+
+			it('Should throw error if client cannot be mapped correctly', () => {
+
+				sandbox.stub(Settings, 'get')
+					.withArgs('clients')
+					.returns(clientSettings);
+
+				assertThrowDatabaseClient(DatabaseDispatcherError.codes.INVALID_CLIENT, databasesSettings.core);
+				assertSettings(1, ['clients']);
+			});
+		});
+	});
+
+	context('when Settings configs exists', () => {
+
+		describe('Get Database by Key', () => {
+
+			it('Should throw Error if database type has not been installed or exists', () => {
+				sandbox.stub(Settings, 'get')
+					.withArgs('database')
+					.returns(databasesSettings);
+
+				assertThrowDatabaseKey(DatabaseDispatcherError.codes.DB_DRIVER_NOT_INSTALLED);
+
+				assertSettings(1, ['database']);
+			});
+
+			it('Should throw Error if cannot create a database instance', () => {
+				sandbox.stub(Settings, 'get')
+					.withArgs('database')
+					.returns(databasesSettings);
+
+				databaseMock();
+
+				assertThrowDatabaseKey(DatabaseDispatcherError.codes.INVALID_DB_DRIVER, 'almostGood');
+				assertSettings(1, ['database']);
+			});
+
+			it('Should return Database Driver instance if it is installed', () => {
+				sandbox.stub(Settings, 'get')
+					.withArgs('database')
+					.returns(databasesSettings);
 
 				databaseMock();
 
 				let dbDriver;
 
 				assert.doesNotThrow(() => {
-					dbDriver = DatabaseDispatcher.getDatabaseByKey('foo');
+					dbDriver = DatabaseDispatcher.getDatabaseByKey();
 				});
 
-				assert(dbDriver instanceof DBDriverMock);
+				assert(dbDriver.constructor.name === 'DBDriverMock');
+
+				assertSettings(1, ['database']);
 			});
 
-			it('should return the cached driver instance on successive calls', function() {
+			it('Should return Database Driver instance if it is installed and use \'databaseWriteType\' as default type', () => {
+				const stubSettings = sandbox.stub(Settings, 'get');
 
-				sandbox.spy(DatabaseDispatcher, '_getDBDriver');
+				stubSettings.withArgs('database')
+					.returns(databasesSettings);
 
-				setEnvVar('DB_FOO_HOST', 'my-host');
-				setEnvVar('DB_FOO_TYPE', 'mysql');
-				setEnvVar('DB_FOO_DATABASE', 'db-name');
+				stubSettings.withArgs('databaseWriteType')
+					.returns('someDatabase');
 
 				databaseMock();
 
-				let DBDriver;
+				let dbDriver;
+
+				assert.doesNotThrow(() => {
+					dbDriver = DatabaseDispatcher.getDatabaseByKey('core');
+				});
+
+				assert(dbDriver.constructor.name === 'DBDriverMock');
+
+				assertSettings(2, ['database', 'databaseWriteType']);
+			});
+
+			it('Should return Database Driver instance if it is installed and used cache', () => {
+
+				sandbox.spy(DatabaseDispatcher, '_getDBDriver');
+
+				sandbox.stub(Settings, 'get')
+					.withArgs('database')
+					.returns(databasesSettings);
+
+				databaseMock();
+
+				let dbDriver;
 				let SameDBDriver;
 
 				assert.doesNotThrow(() => {
-					DBDriver = DatabaseDispatcher.getDatabaseByKey('foo');
-					SameDBDriver = DatabaseDispatcher.getDatabaseByKey('foo');
+					dbDriver = DatabaseDispatcher.getDatabaseByKey();
+					SameDBDriver = DatabaseDispatcher.getDatabaseByKey();
 				});
+
+				assert(dbDriver.constructor.name === 'DBDriverMock');
+
+				assertSettings(1, ['database']);
 
 				sandbox.assert.calledOnce(DatabaseDispatcher._getDBDriver); // eslint-disable-line
-				sandbox.assert.calledWithExactly(DatabaseDispatcher._getDBDriver, { // eslint-disable-line
-					host: 'my-host',
-					type: 'mysql',
-					database: 'db-name',
-					user: undefined,
-					password: undefined,
-					port: undefined
+
+				assert.deepEqual(dbDriver, SameDBDriver);
+			});
+		});
+
+		describe('Get Database by Client', () => {
+
+			it('Should return Write Database Instance when Write database is required and used cache', () => {
+
+				sandbox.spy(DatabaseDispatcher, '_getDBDriver');
+
+				const stubSettings = sandbox.stub(Settings, 'get');
+
+				stubSettings.withArgs('clients')
+					.returns(clientSettings);
+
+				stubSettings.withArgs('databaseWriteType')
+					.returns('someDatabase');
+
+				databaseMock();
+
+				let dbDriver;
+				let SameDBDriver;
+
+				assert.doesNotThrow(() => {
+					dbDriver = DatabaseDispatcher.getDatabaseByClient(sampleClient);
+					SameDBDriver = DatabaseDispatcher.getDatabaseByClient(sampleClient, false);
 				});
 
-				assert.deepEqual(DBDriver, SameDBDriver);
+				assert(dbDriver.constructor.name === 'DBDriverMock');
+
+				assertSettings(2, ['clients', 'databaseWriteType']);
+
+				sandbox.assert.calledOnce(DatabaseDispatcher._getDBDriver); // eslint-disable-line
+
+				assert.deepEqual(dbDriver, SameDBDriver);
 			});
-		});
-	});
 
-	context('when invalid Settings setted', function() {
+			it('Should return Read Database Instance when Read database is required and used cache', () => {
 
-		it('should reject', function() {
+				sandbox.spy(DatabaseDispatcher, '_getDBDriver');
 
-			mockConfig(['foo']);
+				const stubSettings = sandbox.stub(Settings, 'get');
 
-			assertThrows(DatabaseDispatcherError.codes.INVALID_SETTINGS);
-		});
-	});
+				stubSettings.withArgs('clients')
+					.returns(clientSettings);
 
-	context('when valid Settings setted', function() {
+				stubSettings.withArgs('databaseReadType')
+					.returns('someDatabase');
 
-		it('should reject when database config not found for that key', function() {
+				databaseMock();
 
-			mockConfig(validConfig);
+				let dbDriver;
+				let SameDBDriver;
 
-			assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_NOT_FOUND, 'unknown-database-key');
-		});
-
-		it('should reject when database config miss the host', function() {
-
-			['foo', 1, true, ['foo', 'bar']].forEach(invalidConfig => {
-
-				mockConfig({
-					'database-invalid-config': invalidConfig
+				assert.doesNotThrow(() => {
+					dbDriver = DatabaseDispatcher.getDatabaseByClient(sampleClient, true);
+					SameDBDriver = DatabaseDispatcher.getDatabaseByClient(sampleClient, true);
 				});
 
-				assertThrows(DatabaseDispatcherError.codes.INVALID_DB_CONFIG, 'database-invalid-config');
+				assert(dbDriver.constructor.name === 'DBDriverMock');
 
-				Settings.get.restore();
+				assertSettings(2, ['clients', 'databaseReadType']);
 
-				DatabaseDispatcher.clearCache();
+				sandbox.assert.calledOnce(DatabaseDispatcher._getDBDriver); // eslint-disable-line
+
+				assert.deepEqual(dbDriver, SameDBDriver);
+			});
+
+			it('Should return Write Database Instance when Read one is required but it is not define and used Write as default', () => {
+
+				const stubSettings = sandbox.stub(Settings, 'get');
+
+				stubSettings.withArgs('clients')
+					.returns({ database: { fields: { write: clientSettings.database.fields.write } } });
+
+				stubSettings.withArgs('databaseWriteType')
+					.returns('someDatabase');
+
+				stubSettings.withArgs('databaseReadType')
+					.returns();
+
+				databaseMock();
+
+				let dbDriver;
+
+				assert.doesNotThrow(() => {
+					dbDriver = DatabaseDispatcher.getDatabaseByClient(sampleClient, true);
+				});
+
+				assert(dbDriver.constructor.name === 'DBDriverMock');
+
+				assertSettings(3, ['clients', 'databaseWriteType', 'databaseReadType']);
 			});
 		});
 
-		it('should reject when database config miss the host', function() {
-
-			mockConfig({
-				'database-no-host': {}
-			});
-
-			assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_INVALID_HOST, 'database-no-host');
-		});
-
-		it('should reject when database config miss the type', function() {
-
-			mockConfig({
-				'database-no-type': {
-					host: 'my-host',
-					database: 'db-name'
-				}
-			});
-
-			assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_TYPE_INVALID, 'database-no-type');
-		});
-
-		it('should reject when database config have a not allowed type', function() {
-
-			mockConfig({
-				'database-not-allowed-type': {
-					host: 'my-host',
-					type: 'not-allowed-type',
-					database: 'db-name'
-				}
-			});
-
-			assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_TYPE_NOT_ALLOWED, 'database-not-allowed-type');
-		});
-
-		it('should reject when database config contains an invalid database', function() {
-
-			mockConfig({
-				'database-no-database': {
-					host: 'my-host',
-					type: 'mysql',
-					database: ['no-string-database']
-				}
-			});
-
-			assertThrows(DatabaseDispatcherError.codes.DB_CONFIG_INVALID_DATABASE, 'database-no-database');
-		});
-
-		it('should reject when DBDriver is not a constructor', function() {
-
-			mockConfig({
-				'my-database': {
-					host: 'my-host',
-					type: 'mysql',
-					database: 'db-name'
-				}
-			});
-
-			databaseMock(['invalid driver']);
-
-			assertThrows(DatabaseDispatcherError.codes.INVALID_DB_DRIVER, 'my-database');
-		});
-
-		it('should return a driver instance if is installed', function() {
-
-			mockConfig({
-				'my-database': {
-					host: 'my-host',
-					type: 'mysql',
-					database: 'db-name'
-				}
-			});
-
-			databaseMock();
-
-			let dbDriver;
-
-			assert.doesNotThrow(() => {
-				dbDriver = DatabaseDispatcher.getDatabaseByKey('my-database');
-			});
-
-			assert(dbDriver.constructor.name === 'DBDriverMock');
-		});
-
-		it('should return a driver instance if is installed when the config does\'t include a database field', function() {
-
-			mockConfig({
-				'my-database': {
-					host: 'my-host',
-					type: 'elasticsearch'
-				}
-			});
-
-			databaseMock();
-
-			let dbDriver;
-
-			assert.doesNotThrow(() => {
-				dbDriver = DatabaseDispatcher.getDatabaseByKey('my-database');
-			});
-
-			assert(dbDriver.constructor.name === 'DBDriverMock');
-		});
-
-		it('should return a driver instance if is installed using _default key', function() {
-
-			mockConfig({
-				_default: {
-					host: 'my-host',
-					type: 'mysql',
-					database: 'db-name'
-				}
-			});
-
-			databaseMock();
-
-			let dbDriver;
-
-			assert.doesNotThrow(() => {
-				dbDriver = DatabaseDispatcher.getDatabaseByKey();
-			});
-
-			assert(dbDriver.constructor.name === 'DBDriverMock');
-		});
 
 	});
-
 });
