@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Settings to map aliases from client object
 - Settings to have a default database, `databaseWriteType`
-- Caché now stores by config properties
+- Cache now stores by config properties
 
 ### Deprecated  
 - `ENV` vars configs

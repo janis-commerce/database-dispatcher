@@ -5,7 +5,7 @@
 
 **DatabaseDispatcher** is a package that returns the necessary DB driver from a received model.
 Access to the databases configuration then returns the driver instance with the connection.
-It caches the driver per properties.
+It caches the driver per config properties.
 
 ## Installation
 
@@ -80,7 +80,7 @@ To assign Read and Write types of DBDrivers.
 - `clients.database.fields.write`: For Write DB
 - `clients.database.fields.read`: For Read DB
 
-Structure:
+#### Structure:
 - `key`: Field present in *Client object*
 - `value`: Field needed in *DBDriver*
 
@@ -137,7 +137,7 @@ Receives the *config* `[Object]` and returns the database driver instance.
 * **getDatabaseByClient(clientObject, useReadDB)**
 Receives the *client object* `[Object]` and returns the database driver instance associeted to a config.
 If `useReadDB` (`[Boolean]`) doesn't exists or it's `FALSE` will try to get *Write DBDriver Type* by default, if it's `TRUE` will try to get *Read DBDriver Type*.
-If the `databaseReadType` dosen't exists will use `databaseWriteType`.
+If the `databaseReadType` doesn't exists will use `databaseWriteType`.
 If the `databaseWriteType` doesn't exists will be throw a `DatabaseDispatcherError`.
 
 * **clearCache()**
