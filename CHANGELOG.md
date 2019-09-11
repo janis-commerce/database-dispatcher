@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `getDatabaseByClient()` method to return database instance from a client object
 
 ### Changed
-- Settings to mapp aliases from client object
+- Settings to map aliases from client object
 - Settings to have a default database, `databaseWriteType`
 - Caché now stores by config properties
 
