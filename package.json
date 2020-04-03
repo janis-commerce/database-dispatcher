@@ -1,6 +1,6 @@
 {
   "name": "@janiscommerce/database-dispatcher",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Database dispatcher",
   "main": "index.js",
   "scripts": {
